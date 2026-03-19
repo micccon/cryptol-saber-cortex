@@ -1,0 +1,17 @@
+module SimpleAlgorithms where
+import SaberTypes
+import SaberConstants
+
+// ShiftLeftN
+
+PolyShiftLeftN:
+    {n, t}
+    (fin n)
+    => Poly n t -> Integer -> Poly n t
+PolyShiftLeftN poly shift = poly << shift
+
+property PolyShiftLeftNProperty = 
+    PolyShiftLeftN poly shift == poly << shift
+        where
+            poly = [0, 1, 2, 3] : Poly 4 Zq
+            shift = 2
