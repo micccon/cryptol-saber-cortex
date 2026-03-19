@@ -1,0 +1,18 @@
+module SaberConstants where
+
+// Constants used in Saber
+l  = 3
+eq = 13
+ep = 10
+et = 4
+
+seedBytes        = 32
+noiseSeedBytes   = 32
+keyBytes         = 32
+hashBytes        = 32
+
+indcpaPublicKeyBytes = 992
+indcpaSecretKeyBytes = 1248
+publicKeyBytes       = 992
+secretKeyBytes       = 2304
+bytesCCADec          = 1088
