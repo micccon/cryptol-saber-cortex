@@ -1,25 +1,19 @@
 module SaberConstants where
 
-// Constants used in Saber
-l : {n} (fin n) => n
-l  = 3
+// Core parameters (type-level constants)
+type l  = 3
+type eq = 13
+type ep = 10
+type et = 4
 
-eq : {n} (fin n) => n
-eq = 13
+// Byte sizes
+type seedBytes        = 32
+type noiseSeedBytes   = 32
+type keyBytes         = 32
+type hashBytes        = 32
 
-ep : {n} (fin n) => n
-ep = 10
-
-et : {n} (fin n) => n
-et = 4
-
-seedBytes        = 32
-noiseSeedBytes   = 32
-keyBytes         = 32
-hashBytes        = 32
-
-indcpaPublicKeyBytes = 992
-indcpaSecretKeyBytes = 1248
-publicKeyBytes       = 992
-secretKeyBytes       = 2304
-bytesCCADec          = 1088
+type indcpaPublicKeyBytes = 992
+type indcpaSecretKeyBytes = 1248
+type publicKeyBytes       = 992
+type secretKeyBytes       = 2304
+type bytesCCADec          = 1088
