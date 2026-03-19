@@ -1,0 +1,27 @@
+module Types where
+import SaberConstants
+
+// Byte type
+type Byte = [8]
+
+// String type
+type BitString n = [n]
+type ByteString n = [n] Bytes
+
+// Z types
+type Zq = [13]
+type Zp = [10]
+type Zt = [et]
+type Z2 = [1]
+
+// Polynomial with num of coefficients c of size/width n
+type Poly c n = [c] n
+type Poly_Zq = Poly 256 Zq
+type Poly_Zp = Poly 256 Zp
+type Poly_Zt = Poly 256 Zt
+type Poly_Z2 = Poly 256 Z2
+
+
+
+
+
