@@ -1,9 +1,16 @@
 module SaberConstants where
 
 // Constants used in Saber
+l : {n} (fin n) => n
 l  = 3
+
+eq : {n} (fin n) => n
 eq = 13
+
+ep : {n} (fin n) => n
 ep = 10
+
+et : {n} (fin n) => n
 et = 4
 
 seedBytes        = 32

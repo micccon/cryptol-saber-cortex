@@ -6,16 +6,16 @@ type Byte = [8]
 
 // String type
 type BitString n = [n]
-type ByteString n = [n] Bytes
+type ByteString n = [n] Byte
 
 // Z types
-type Zq = [13]
-type Zp = [10]
+type Zq = [eq]
+type Zp = [ep]
 type Zt = [et]
 type Z2 = [1]
 
 // Polynomial with num of coefficients c of size/width n
-type Poly c n = [c] n
+type Poly n t = [n] t
 type Poly_Zq = Poly 256 Zq
 type Poly_Zp = Poly 256 Zp
 type Poly_Zt = Poly 256 Zt
