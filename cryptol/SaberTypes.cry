@@ -21,6 +21,13 @@ type Poly_Zp = Poly 256 Zp
 type Poly_Zt = Poly 256 Zt
 type Poly_Z2 = Poly 256 Z2
 
+// Vector types of l polynomials
+type VecPoly n t = [l] (Poly n t)
+type VecPoly_Zq = VecPoly 256 Zq
+type VecPoly_Zp = VecPoly 256 Zp
+type VecPoly_Zt = VecPoly 256 Zt
+type VecPoly_Z2 = VecPoly 256 Z2
+
 
 
 
