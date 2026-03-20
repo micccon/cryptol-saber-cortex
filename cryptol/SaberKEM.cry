@@ -1,0 +1,12 @@
+module SaberKEM where
+import SaberTypes
+import SaberConstants
+import SaberPKE
+import SaberHelpers
+import SHAKE128
+import SaberAlgorithms
+
+//==========================================================================
+
+KEM_KeyGen :
+    ByteString 

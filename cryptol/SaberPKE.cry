@@ -39,12 +39,43 @@ property PKE_KeyGenProperty =
     b = (MatrixVectorMul (transpose _A) s) + h : PolyVec_Zq
     bp = [ RoundPoly_ZqToZp (b @ i) | i <- [0..l-1] ] : PolyVec_Zp
 
+PKE_Decrypt : 
+    ByteString bytesCCADec -> ByteString indcpaSecretKeyBytes -> ByteString 32
+PKE_Decrypt ciphertext secretKey = plaintext
+  where
+    s = BS2PolyVec secretKey : PolyVec_Zq
+    
+    cmBytes : ByteString (et * 256 / 8)
+    cmBytes = take`{et * 256 / 8} ciphertext
+    ctBytes : ByteString (l * ep * 256 / 8)
+    ctBytes = drop`{et * 256 / 8} ciphertext
+
+    cmT : Poly_Zt
+    cmT = BS2Poly`{et} cmBytes : Poly_Zt
+    cmP : Poly_Zp
+    cmP = PolyShiftLeftN (RoundPoly_ZtToZp cmT) (`ep - `et)
+
+    bp : PolyVec_Zp
+    bp = BS2PolyVec`{ep} ctBytes
+    sp : PolyVec_Zp
+    sp = [ RoundPoly_ZqToZp (s @ i) | i <- [0..l-1] ]
+
+    v : Poly_Zp
+    v = InnerProd bp sp
+
+    shifted : Poly_Zp
+    shifted = PolyShiftRightN (v - cmP + (h2 : Poly_Zp)) (`ep - 1)
+
+    m' : Poly_Z2
+    m' = RoundPoly_ZpToZ2 shifted
+
+    plaintext = Poly2BS`{1} m'
 
 PKE_Enc : 
   ByteString (256/8) ->
   ByteString seedBytes ->
   ByteString indcpaPublicKeyBytes ->
-  ByteString indcpaBytes
+  ByteString bytesCCADec
 PKE_Enc m seedS publicKey = ciphertext
   where
     // Split public key into constituent parts
@@ -74,3 +105,15 @@ PKE_Enc m seedS publicKey = ciphertext
 
     // Concatenate cm and the rounded b' vector to form the final ciphertext
     ciphertext = (Poly2BS cm) # (PolyVec2BS b'p) : ByteString indcpaBytes
+
+property PKE_EncDecRoundTrip
+    (m : ByteString (256 / 8))
+    (encSeed : ByteString seedBytes) =
+    PKE_Decrypt (PKE_Enc m encSeed publicKey) secretKey == m
+  where
+    (publicKey, secretKey) = PKE_KeyGen
+
+property PKE_EncDecExample =
+  PKE_EncDecRoundTrip
+    ([0x00 | _ <- [0 .. 31]] : ByteString 32)
+    ([0x01 | _ <- [0 .. 31]] : ByteString 32)
