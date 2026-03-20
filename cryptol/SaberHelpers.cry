@@ -3,6 +3,11 @@ import SaberTypes
 import SaberConstants
 import SHAKE128
 
+// ==========================================================================
+h1 = ConstPoly 2 ^^ (`eq - `ep - 1)
+h2 = ConstPoly (2 ^^ (`ep - 2) - 2 ^^ (`ep - `et - 1) + 2 ^^ (`eq - `ep - 1))
+h = ConstPolyVec 2 ^^ (`eq - `ep - 1)
+
 //==========================================================================
 /**
  * Compute the Hamming weight of a bit string by counting how many bits are set
@@ -23,21 +28,20 @@ property HammingWeightProperty (bitString : BitString 256) =
 
 //==========================================================================
 /**
- * Produce a deterministic byte string for testing. This is not intended to be
- * cryptographically random; it just gives us a predictable alternating pattern
- * of `6` and `7` bytes that is easy to recognize in debugging and proofs.
+ * Produce a deterministic byte string for testing.
  *
- * The property below checks that the helper returns exactly that fixed pattern
- * for a representative 32-byte input.
+ * The output length is `n` bytes (selected at the call site as a type
+ * parameter), and bytes alternate as `6, 7, 6, 7, ...`.
  */
 RandBytes:
     {n}
     (fin n, n >= 1)
-    => ByteString n -> ByteString n
-RandBytes _ = [if num % 2 == 0 then 7 else 6 | num <- [1 .. n]]
+    => Integer -> ByteString n
+RandBytes n=
+    [if num % 2 == 0 then 7 else 6 | num <- [1 .. n]]
 
-property RandBytesProperty (byteString : ByteString 32) =
-    RandBytes byteString == [if num % 2 == 0 then 7 else 6 | num <- [1 .. 32]]
+property RandBytesProperty =
+    RandBytes 32 == [if num % 2 == 0 then 7 else 6 | num <- [1 .. 32]]
 
 //==========================================================================
 /**
@@ -56,3 +60,33 @@ VerifyBS bs1 bs2 = bs1 == bs2
 
 VerifyBSProperty (bs1 : ByteString 32) (bs2 : ByteString 32) =
     VerifyBS bs1 bs2 == (bs1 == bs2)
+
+//==========================================================================
+/**
+ * Construct a polynomial whose 256 coefficients are all the same value.
+ */
+ConstPoly :
+    {t}
+    t -> Poly t
+ConstPoly elementVal = [ elementVal | _ <- [0 .. 255] ]
+
+//==========================================================================
+/**
+ * Construct a vector of `l` polynomials whose coefficients are all the same
+ * value.
+ */
+ConstPolyVec :
+    {t}
+    t -> PolyVec t
+ConstPolyVec elementVal = [ ConstPoly elementVal | _ <- [0 .. l - 1] ]
+
+//==========================================================================
+/**
+ * Construct an `l x l` matrix of polynomials whose coefficients are all the
+ * same value.
+ */
+ConstPolyMatrix :
+    {t}
+    t -> PolyMatrix t
+ConstPolyMatrix elementVal = [ ConstPolyVec elementVal | _ <- [0 .. l - 1] ]
+

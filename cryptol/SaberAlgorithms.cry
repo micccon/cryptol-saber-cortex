@@ -1,6 +1,8 @@
-module SimpleAlgorithms where
+module SaberAlgorithms where
 import SaberTypes
 import SaberConstants
+import SHAKE128
+import SaberHelpers
 
 /**
  * Shift every coefficient of a polynomial left by `shift` bits.

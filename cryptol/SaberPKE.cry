@@ -1,0 +1,27 @@
+module SaberPKE where
+import SaberTypes
+import SaberConstants
+import SaberAlgorithms
+import SaberHelpers
+import SHAKE128
+
+//==========================================================================
+
+PKE_KeyGen : (ByteString indcpaPublicKeyBytes, ByteString  indcpaSecretKeyBytes)
+PKE_KeyGen = (publicKey, secretKey)
+  where
+    _seedA = RandBytes `seedBytes : ByteString seedBytes
+    seedA = xofBytes`{dBytes = seedBytes} _seedA : ByteString seedBytes
+    seedS = RandBytes `noiseSeedBytes : ByteString noiseSeedBytes
+
+    _A = GenMatrix_Zq seedA
+    s = GenSecret_Zq seedS
+
+    b = (MatrixVectorMul (transpose _A) s) + h : PolyVec_Zq
+    bp = [ PolyShiftRightN (b @ i) (`eq - `ep) | i <- [0..l-1] ] : PolyVec_Zq
+
+    secretKey = PolyVec2BS s : ByteString indcpaSecretKeyBytes
+
+    pk = PolyVec2BS bp
+    publicKey : ByteString indcpaPublicKeyBytes
+    publicKey = seedA # pk
