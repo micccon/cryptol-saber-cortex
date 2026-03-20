@@ -26,4 +26,17 @@ PKE_KeyGen = (publicKey, secretKey)
     publicKey : ByteString indcpaPublicKeyBytes
     publicKey = seedA # pk : ByteString indcpaPublicKeyBytes
 
+property PKE_KeyGenProperty =
+    PKE_KeyGen == (seedA # PolyVec2BS bp, PolyVec2BS s)
+  where
+    _seedA = RandBytes `seedBytes : ByteString seedBytes
+    seedA = xofBytes`{dBytes = seedBytes} _seedA : ByteString seedBytes
+    seedS = RandBytes `noiseSeedBytes : ByteString noiseSeedBytes
+
+    _A = GenMatrix_Zq seedA
+    s = GenSecret_Zq seedS
+
+    b = (MatrixVectorMul (transpose _A) s) + h : PolyVec_Zq
+    bp = [ RoundPoly_ZqToZp (b @ i) | i <- [0..l-1] ] : PolyVec_Zp
+
 

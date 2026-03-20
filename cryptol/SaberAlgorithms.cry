@@ -37,7 +37,7 @@ property PolyShiftRightNProperty (poly : Poly Zq) =
     PolyShiftRightN poly shift == [ poly @ i >> shift | i <- [0 .. 255] ]
         where
             shift = 2
-
+    
 /**
  * Convert a byte string into a polynomial with `k`-bit coefficients.
  *
