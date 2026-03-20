@@ -4,35 +4,33 @@ import SaberConstants
 
 // ShiftLeftN to shift a polynomial left by n bits (multiply by 2^n)
 PolyShiftLeftN:
-    {n, t}
-    (fin n, Zero t)
-    => Poly n t -> Integer -> Poly n t
+    {t}
+    (Zero t)
+    => Poly t -> Integer -> Poly t
 PolyShiftLeftN poly shift = poly << shift
 
-property PolyShiftLeftNProperty = 
+property PolyShiftLeftNProperty (poly : Poly Zq) =
     PolyShiftLeftN poly shift == poly << shift
         where
-            poly = [0, 1, 2, 3] : Poly 4 Zq
             shift = 2
 
 // ShiftRightN to shift a polynomial right by n bits (divide by 2^n)
 PolyShiftRightN:
-    {n, t}
-    (fin n, Zero t)
-    => Poly n t -> Integer -> Poly n t
+    {t}
+    (Zero t)
+    => Poly t -> Integer -> Poly t
 PolyShiftRightN poly shift = poly >> shift
 
-property PolyShiftRightNProperty = 
+property PolyShiftRightNProperty (poly : Poly Zq) =
     PolyShiftRightN poly shift == poly >> shift
         where
-            poly = [0, 1, 2, 3] : Poly 4 Zq
             shift = 2
 
 // ByteString to polynomial
 BS2Poly:
     {k}
     (fin k)
-    => ByteString (k*256/8) -> Poly 256 [k]
+    => ByteString (k*256/8) -> Poly [k]
 BS2Poly byteString = split`{each=k} (join byteString)
 
 property BS2PolyProperty (byteString : ByteString 128) =
@@ -42,15 +40,6 @@ property BS2PolyProperty (byteString : ByteString 128) =
 Poly2BS: 
     {k} 
     (fin k) 
-    => Poly n [k] -> ByteString (k*256/8)
+    => Poly [k] -> ByteString (k*256/8)
+
 Poly2BS poly = split`{each=k} (join poly)
-
-property Poly2BSProperty (polynomial : Poly 256 [4]) =
-    Poly2BS `{4} polynomial == split`{each=8} (join polynomial)
-
-// ByteString to VecPoly
-BS2VecPoly:
-    {l, k}
-    (fin l, fin k)
-    => ByteString (l*k*256/8) -> VecPoly 256 [k]
-BS2VecPoly byteString = [BS2Poly i | i <- split`{parts=l, each=k*256/8} byteString]
