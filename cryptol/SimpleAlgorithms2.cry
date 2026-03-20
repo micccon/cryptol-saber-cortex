@@ -43,5 +43,14 @@ Poly2BS:
     {k} 
     (fin k) 
     => Poly n [k] -> ByteString (k*256/8)
-
 Poly2BS poly = split`{each=k} (join poly)
+
+property Poly2BSProperty (polynomial : Poly 256 [4]) =
+    Poly2BS `{4} polynomial == split`{each=8} (join polynomial)
+
+// ByteString to VecPoly
+BS2VecPoly:
+    {l, k}
+    (fin l, fin k)
+    => ByteString (l*k*256/8) -> VecPoly 256 [k]
+BS2VecPoly byteString = [BS2Poly i | i <- split`{parts=l, each=k*256/8} byteString]
