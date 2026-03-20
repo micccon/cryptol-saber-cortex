@@ -93,4 +93,3 @@ ConstPolyMatrix elementVal = [ ConstPolyVec elementVal | _ <- [0 .. l - 1] ]
 RoundPoly_ZqToZp : Poly Zq -> Poly Zp
 RoundPoly_ZqToZp poly =
     [ drop`{eq - ep} ((poly @ i) >> (`eq - `ep)) | i <- [0 .. 255] ]
-
