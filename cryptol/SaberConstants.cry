@@ -1,19 +1,19 @@
 module SaberConstants where
 
 // Core parameters (type-level constants)
-type l  = 3
-type eq = 13
-type ep = 10
-type et = 4
+type l  = 3     // Changes based on security level: 2 for LightSaber, 3 for Saber, 4 for FireSaber
+type eq = 13    // Fixed across all security levels
+type ep = 10    // Fixed across all security levels
+type et = 4     // Fixed across all security levels
 
 // Byte sizes
-type seedBytes        = 32
-type noiseSeedBytes   = 32
-type keyBytes         = 32
-type hashBytes        = 32
+type seedBytes        = 32  // Fixed across all security levels
+type noiseSeedBytes   = 32  // Fixed across all security levels
+type keyBytes         = 32  // Fixed across all security levels
+type hashBytes        = 32  // Fixed across all security levels
 
-type indcpaPublicKeyBytes = 992
-type indcpaSecretKeyBytes = 1248
-type publicKeyBytes       = 992
-type secretKeyBytes       = 2304
-type bytesCCADec          = 1088
+type indcpaPublicKeyBytes = 992    // Changes based on security level: 672 for LightSaber, 992 for Saber, 1312 for FireSaber
+type indcpaSecretKeyBytes = 1248   // Changes based on security level: 832 for LightSaber, 1248 for Saber, 1664 for FireSaber
+type publicKeyBytes       = 992    // Changes based on security level: 672 for LightSaber, 992 for Saber, 1312 for FireSaber
+type secretKeyBytes       = 2304   // Changes based on security level: 1568 for LightSaber, 2304 for Saber, 3040 for FireSaber
+type bytesCCADec          = 1088   // Changes based on security level: 736 for LightSaber, 1088 for Saber, 1472 for FireSaber
