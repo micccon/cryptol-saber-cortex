@@ -1,0 +1,20 @@
+module SaberHelpers where
+import SaberTypes
+import SaberConstants
+
+// Hamming weight of a bit string
+HammingWeight:
+    {n}
+    (fin n)
+    => BitString n -> Integer
+HammingWeight bitString = sum [ if bit then 1 else 0 | bit <- bitString ]
+
+property HammingWeightProperty (bitString : BitString 256) =
+    HammingWeight bitString == sum [ if bit then 1 else 0 | bit <- bitString ]
+
+// Not really random, 6767676767 ... for testing purposes
+RandBytes:
+    {n}
+    (fin n, n >= 1)
+    => ByteString n
+RandBytes = [if num % 2 == 0 then 7 else 6 | num <- [1 .. n]]
