@@ -27,3 +27,14 @@ property PolyShiftRightNProperty =
         where
             poly = [0, 1, 2, 3] : Poly 4 Zq
             shift = 2
+
+BS2Poly : 
+  {k} 
+  (fin k) 
+  => ByteString (k*256/8) -> Poly 256 [k]
+BS2Poly bs = [ getCoeff i | i <- [0..255] ]
+  where
+    bits : [256*k]   // BitString equal to 8 * number of bytes
+    bits = join bs
+
+    getCoeff i = bits[(i*k) ..< (i+1)*k]
