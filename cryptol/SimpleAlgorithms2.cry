@@ -28,11 +28,20 @@ property PolyShiftRightNProperty =
             poly = [0, 1, 2, 3] : Poly 4 Zq
             shift = 2
 
-// Byte String to polynomial
+// ByteString to polynomial
 BS2Poly:
     {k}
     (fin k)
     => ByteString (k*256/8) -> Poly 256 [k]
 BS2Poly byteString = split`{each=k} (join byteString)
+
 property BS2PolyProperty (byteString : ByteString 128) =
     BS2Poly byteString == split`{each=4} (join byteString)
+
+// Polynomial to ByteString
+Poly2BS: 
+    {k} 
+    (fin k) 
+    => Poly n [k] -> ByteString (k*256/8)
+
+Poly2BS poly = split`{each=k} (join poly)
