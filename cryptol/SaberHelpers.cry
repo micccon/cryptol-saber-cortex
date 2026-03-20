@@ -103,6 +103,10 @@ property GenMatrix_ZqProperty (seedBytes : ByteString 32) =
 GenSecret_Zq : ByteString noiseBytes -> PolyVec_Zq
 GenSecret_Zq seed = vector
     where
-        buf : ByteString (l * l * 256 / 8 * )
-        buf = xofBytes`{dBytes = l * l * 256 / 8 * eq} seed
-    
+        buf : ByteString (l * 256 / 8 * mu)
+        buf = xofBytes`{dBytes = l * 256 / 8 * mu} seed
+
+        coeffs : [2 * l * 256] [mu / 2]
+        coeffs = split`{each=mu/2} (join buf)
+
+        
