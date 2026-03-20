@@ -18,3 +18,7 @@ RandBytes:
     (fin n, n >= 1)
     => ByteString n
 RandBytes = [if num % 2 == 0 then 7 else 6 | num <- [1 .. n]]
+
+// Verify if two Byte Strings are equivalent
+Verify {n} (fin n) => ByteString n -> ByteString n -> Bit
+Verify a b = a == b
