@@ -79,10 +79,10 @@ PolyVec2BS:
     (fin k)
     => PolyVec [k] -> ByteString (l * k * 256/8)
 PolyVec2BS v =
-    join [ Poly2BS poly | poly <- v ]
+    join [ Poly2BS poly | poly <- vector ]
 
 property PolyVec2BSProperty (v : PolyVec [4]) =
-    PolyVec2BS `{4} v == join (reverse [ Poly2BS `{4} poly | poly <- v ])
+    PolyVec2BS `{4} v == join [ Poly2BS `{4} poly | poly <- vector ]
 
 
 //==========================================================================
