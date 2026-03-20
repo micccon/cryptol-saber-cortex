@@ -5,6 +5,7 @@ type l  = 3
 type eq = 13
 type ep = 10
 type et = 4
+type mu = 8
 
 // Byte sizes
 type seedBytes        = 32

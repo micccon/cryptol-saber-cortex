@@ -2,7 +2,12 @@ module SimpleAlgorithms where
 import SaberTypes
 import SaberConstants
 
-// ShiftLeftN to shift a polynomial left by n bits (multiply by 2^n)
+/**
+ * Shift every coefficient of a polynomial left by `shift` bits.
+ *
+ * For fixed-width coefficient types (such as `Zq`), this corresponds to
+ * multiplication by `2^shift` with wraparound in that coefficient domain.
+ */
 PolyShiftLeftN:
     {t}
     (Zero t)
@@ -14,7 +19,12 @@ property PolyShiftLeftNProperty (poly : Poly Zq) =
         where
             shift = 2
 
-// ShiftRightN to shift a polynomial right by n bits (divide by 2^n)
+/**
+ * Shift every coefficient of a polynomial right by `shift` bits.
+ *
+ * For fixed-width coefficient types, this corresponds to dropping lower bits,
+ * i.e. a power-of-two scaling down in bit representation.
+ */
 PolyShiftRightN:
     {t}
     (Zero t)
@@ -26,7 +36,12 @@ property PolyShiftRightNProperty (poly : Poly Zq) =
         where
             shift = 2
 
-// Byte String to polynomial
+/**
+ * Convert a byte string into a polynomial with `k`-bit coefficients.
+ *
+ * The bytes are flattened into bits and regrouped into 256 coefficients,
+ * each of width `k`.
+ */
 BS2Poly:
     {k}
     (fin k)
@@ -36,7 +51,11 @@ BS2Poly byteString = split`{each=k} (join byteString)
 property BS2PolyProperty (byteString : ByteString (4 * 32)) =
     BS2Poly `{4} byteString == split`{each=4} (join byteString)
 
-// Polynomial to Byte String
+/**
+ * Convert a polynomial with `k`-bit coefficients into a byte string.
+ *
+ * Coefficients are flattened into bits and then packed into bytes.
+ */
 Poly2BS:
     {k}
     (fin k)
@@ -47,7 +66,6 @@ property Poly2BSProperty (polynomial : Poly [4]) =
     Poly2BS `{4} polynomial == split`{each=8} (join polynomial)
 
 
-//==========================================================================
 /** 
  * If BS2Poly and Poly2BS are implemented correctly, then either function
  * should act as the "inverse" to the other. These properties prove that 
@@ -60,10 +78,15 @@ property Poly2BS_BS2Poly_RoundTrip_4 (p : Poly [4]) =
     BS2Poly `{4} (Poly2BS `{4} p) == p
 property BS2Poly_Poly2BS_RoundTrip_4 (bs : ByteString (4 * 256/8)) =
         Poly2BS `{4} (BS2Poly `{4} bs) == bs
-//==========================================================================
 
 
-// Byte String to vector of polynomials
+/**
+ * Convert a byte string into a vector of `l` polynomials with `k`-bit
+ * coefficients.
+ *
+ * The input is split into `l` polynomial-sized slices, each decoded via
+ * `BS2Poly`.
+ */
 BS2PolyVec:
     {k}
     (fin k)
@@ -73,7 +96,11 @@ BS2PolyVec byteString = [ BS2Poly polyByteString | polyByteString <- (split`{par
 property BS2PolyVecProperty (byteString : ByteString (4 * 256/8 * l)) =
     BS2PolyVec `{4} byteString == [ BS2Poly `{4} polyByteString | polyByteString <- (split`{parts=l} byteString) ]
 
-// Vector of polynomials to Byte String
+/**
+ * Convert a vector of `l` polynomials into a byte string.
+ *
+ * Each polynomial is encoded with `Poly2BS` and concatenated in order.
+ */
 PolyVec2BS:
     {k}
     (fin k)
@@ -85,7 +112,6 @@ property PolyVec2BSProperty (vector : PolyVec [4]) =
     PolyVec2BS `{4} vector == join [ Poly2BS `{4} poly | poly <- vector ]
 
 
-//==========================================================================
 /** 
  * If BS2PolyVec and PolyVec2BS are implemented correctly, then either function
  * should act as the "inverse" to the other. These properties prove that 
@@ -98,17 +124,14 @@ property PolyVec2BSProperty (vector : PolyVec [4]) =
     BS2PolyVec `{4} (PolyVec2BS `{4} v) == v
 property BS2PolyVec_PolyVec2BS_RoundTrip_4 (bs : ByteString (l * 4 * 256/8)) =
     PolyVec2BS `{4} (BS2PolyVec `{4} bs) == bs
-//==========================================================================
 
 
-/** 
- * please god oh please god not negacyclic convolution
- * anything but negacyclic convolution please i beg of u
- * ...
- * i really hope this is right
+/**
+ * Compute negacyclic polynomial multiplication modulo `x^256 + 1`.
+ *
+ * This is the ring multiplication used for Saber polynomials, where terms
+ * that wrap past degree 255 re-enter with a sign flip.
  */
-
-// (Negacyclic) Polynomial multiplication in Rp or Rq, depending on modulus
 PolyMul :
     {t}
     (fin t)
@@ -133,7 +156,11 @@ property PolyMulProperty (a : Poly Zq) (b : Poly Zq) =
       where
         j = (c - i) % 256
 
-// Matrix vector multiplications
+/**
+ * Multiply an `l x l` polynomial matrix by a length-`l` polynomial vector.
+ *
+ * Each output polynomial is the sum of `l` polynomial products along a row.
+ */
 MatrixVectorMul :
     {t}
     (fin t)
@@ -145,7 +172,12 @@ property MatrixVectorMulProperty (matrix : PolyMatrix Zp) (vector : PolyVec Zp) 
     MatrixVectorMul matrix vector ==
         [ sum [ PolyMul (matrix @ i @ j) (vector @ j) | j <- [0 .. l-1] ] | i <- [0 .. l-1] ]
 
-// Inner product of two vectors of polynomials
+/**
+ * Compute the inner product of two polynomial vectors.
+ *
+ * The result is a single polynomial obtained by summing pairwise polynomial
+ * products across the `l` vector positions.
+ */
 InnerProd :
     {t}
     (fin t)
@@ -154,3 +186,93 @@ InnerProd va vb = [ sum [ PolyMul (va @ i) (vb @ i) @ k | i <- [0..l-1] ] | k <-
 
 InnerProdProperty (va : PolyVec Zp) (vb : PolyVec Zp) =
     InnerProd va vb == [ sum [ PolyMul (va @ i) (vb @ i) @ k | i <- [0..l-1] ] | k <- [0..255] ]
+
+/**
+ * Generate the Saber public matrix over `Zq` from a seed using SHAKE-128.
+ * The seed is expanded into enough bytes to fill all `l * l` polynomials,
+ * then the output is reshaped in stages:
+ *
+ * 1. bytes -> `eq`-bit coefficients
+ * 2. coefficients -> 256-coefficient polynomials
+ * 3. polynomials -> `l x l` matrix
+ *
+ * This matches the high-level Saber matrix-generation specification while
+ * using `xofBytes` so that we stay in normal byte ordering rather than dealing
+ * with raw Keccak bit ordering directly.
+ *
+ * The property below checks that `GenMatrix_Zq` is exactly this reshape
+ * pipeline applied to the SHAKE-128 output.
+ */
+GenMatrix_Zq : ByteString seedBytes -> PolyMatrix_Zq
+GenMatrix_Zq seed = matrix
+    where
+        buf : ByteString (l * l * 256 / 8 * eq)
+        buf = xofBytes`{dBytes = l * l * 256 / 8 * eq} seed
+
+        coeffs : [l * l * 256] Zq
+        coeffs = split`{each=eq} (join buf)
+
+        polys : [l * l] (Poly Zq)
+        polys = split `{each=256} coeffs
+
+        matrix : PolyMatrix Zq
+        matrix = split `{each=l} polys
+
+property GenMatrix_ZqProperty (seedBytes : ByteString 32) =
+    GenMatrix_Zq seedBytes ==
+      split`{each=l}
+        (split`{each=256}
+          (split`{each=eq}
+            (join (xofBytes`{dBytes = l * l * 256 / 8 * eq} seedBytes))))
+
+exampleSeed32 : ByteString 32
+exampleSeed32 = [ fromInteger i | i <- [0 .. 31] ]
+
+property GenMatrix_ZqExample =
+        GenMatrix_Zq exampleSeed32 ==
+            split`{each=l}
+                (split`{each=256}
+                    (split`{each=eq}
+                        (join (xofBytes`{dBytes = l * l * 256 / 8 * eq} exampleSeed32))))
+
+/**
+ * Generate the Saber secret vector over `Zq` from a noise seed using
+ * SHAKE-128.
+ *
+ * The expanded output is split into `mu`-bit chunks, each chunk is split into
+ * two `mu/2` halves, and every coefficient is formed as the difference of
+ * Hamming weights of those halves (interpreted in `Zq`).
+ */
+
+GenSecret_Zq : ByteString noiseSeedBytes -> PolyVec_Zq
+GenSecret_Zq seed = vector
+    where
+        buf : ByteString (l * 256 / 8 * mu)
+        buf = xofBytes`{dBytes = l * 256 / 8 * mu} seed
+
+        pairs : [l * 256] [2] [mu / 2]
+        pairs = map split`{parts=2} (split`{each=mu} (join buf))
+
+        secretCoeffs : [l * 256] Zq
+        secretCoeffs = [ fromInteger (HammingWeight (k @ 0) - HammingWeight (k @ 1)) : Zq | k <- pairs ]
+
+        vector : PolyVec Zq
+        vector = split`{parts = l} secretCoeffs
+
+property GenSecret_ZqExample =
+        GenSecret_Zq exampleSeed32 ==
+            split`{parts=l}
+                [ fromInteger (HammingWeight (k @ 0) - HammingWeight (k @ 1)) : Zq
+                | k <- map split`{parts=2}
+                                 (split`{each=mu}
+                                     (join (xofBytes`{dBytes = l * 256 / 8 * mu} exampleSeed32)))
+                ]
+
+property GenSecret_ZqProperty (noiseSeed : ByteString noiseSeedBytes) =
+        GenSecret_Zq noiseSeed ==
+            split`{parts=l}
+                [ fromInteger (HammingWeight (k @ 0) - HammingWeight (k @ 1)) : Zq
+                | k <- map split`{parts=2}
+                                 (split`{each=mu}
+                                     (join (xofBytes`{dBytes = l * 256 / 8 * mu} noiseSeed)))
+                ]
