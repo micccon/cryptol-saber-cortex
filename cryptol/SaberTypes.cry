@@ -14,27 +14,26 @@ type Zp = [ep]
 type Zt = [et]
 type Z2 = [1]
 
-// Polynomial with num of coefficients c of size/width n
-type Poly n t = [n] t
-type Poly_Zq = Poly 256 Zq
-type Poly_Zp = Poly 256 Zp
-type Poly_Zt = Poly 256 Zt
-type Poly_Z2 = Poly 256 Z2
+// Polynomial types always have 256 coefficients in Saber
+type Poly t = [256] t
+type Poly_Zq = Poly Zq
+type Poly_Zp = Poly Zp
+type Poly_Zt = Poly Zt
+type Poly_Z2 = Poly Z2
 
 // Vector types of l polynomials
-type VecPoly n t = [l] (Poly n t)
-type VecPoly_Zq = VecPoly 256 Zq
-type VecPoly_Zp = VecPoly 256 Zp
-type VecPoly_Zt = VecPoly 256 Zt
-type VecPoly_Z2 = VecPoly 256 Z2
+type VecPoly t = [l] (Poly t)
+type VecPoly_Zq = VecPoly Zq
+type VecPoly_Zp = VecPoly Zp
+type VecPoly_Zt = VecPoly Zt
+type VecPoly_Z2 = VecPoly Z2
 
 // Matrix types of l x l polynomials
-type MatrixPoly n t = [l] (VecPoly n t)
-type MatrixPoly_Zq = MatrixPoly 256 Zq
-type MatrixPoly_Zp = MatrixPoly 256 Zp
-type MatrixPoly_Zt = MatrixPoly 256 Zt
-type MatrixPoly_Z2 = MatrixPoly 256 Z2
-
+type MatrixPoly t = [l] (VecPoly t)
+type MatrixPoly_Zq = MatrixPoly Zq
+type MatrixPoly_Zp = MatrixPoly Zp
+type MatrixPoly_Zt = MatrixPoly Zt
+type MatrixPoly_Z2 = MatrixPoly Z2
 
 
 
