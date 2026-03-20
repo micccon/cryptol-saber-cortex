@@ -27,3 +27,14 @@ type VecPoly_Zq = VecPoly 256 Zq
 type VecPoly_Zp = VecPoly 256 Zp
 type VecPoly_Zt = VecPoly 256 Zt
 type VecPoly_Z2 = VecPoly 256 Z2
+
+// Matrix types of l x l polynomials
+type MatrixPoly n t = [l] (VecPoly n t)
+type MatrixPoly_Zq = MatrixPoly 256 Zq
+type MatrixPoly_Zp = MatrixPoly 256 Zp
+type MatrixPoly_Zt = MatrixPoly 256 Zt
+type MatrixPoly_Z2 = MatrixPoly 256 Z2
+
+
+
+
