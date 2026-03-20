@@ -120,17 +120,23 @@ property PolyVec2BSProperty (vector : PolyVec [4]) =
  * The first proves that BS2PolyVec "undoes" PolyVec2BS.
  * The second proves that PolyVec2BS "undoes" BS2PolyVec.
  */
- property PolyVec2BS_BS2PolyVec_RoundTrip_4 (v : PolyVec [4]) =
+property PolyVec2BS_BS2PolyVec_RoundTrip_4 (v : PolyVec [4]) =
     BS2PolyVec `{4} (PolyVec2BS `{4} v) == v
 property BS2PolyVec_PolyVec2BS_RoundTrip_4 (bs : ByteString (l * 4 * 256/8)) =
     PolyVec2BS `{4} (BS2PolyVec `{4} bs) == bs
 
 
+/** 
+ * please god oh please god not negacyclic convolution
+ * anything but negacyclic convolution please i beg of u
+ */
+
 /**
  * Compute negacyclic polynomial multiplication modulo `x^256 + 1`.
  *
  * This is the ring multiplication used for Saber polynomials, where terms
- * that wrap past degree 255 re-enter with a sign flip.
+ * that wrap past degree 255 re-enter with a sign flip and are then combined
+ * with other like terms.
  */
 PolyMul :
     {t}
