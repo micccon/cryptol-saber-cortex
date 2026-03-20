@@ -90,9 +90,52 @@ ConstPolyMatrix :
     t -> PolyMatrix t
 ConstPolyMatrix elementVal = [ ConstPolyVec elementVal | _ <- [0 .. l - 1] ]
 
+/**
+ * Round a polynomial from Zq (EQ-bit coefficients) to Zp (EP-bit coefficients).
+ * Each coefficient is effectively divided by 2^(EQ - EP) with truncation.
+ */
 RoundPoly_ZqToZp : Poly Zq -> Poly Zp
 RoundPoly_ZqToZp poly =
     [ drop`{eq - ep} ((poly @ i) >> (`eq - `ep)) | i <- [0 .. 255] ]
+
+/**
+ * Lift a polynomial from `Zt` to `Zp` and shift each coefficient left by
+ * `ep - et` bits.
+ *
+ * This matches Saber decryption step `cm = SHIFTLEFT(cm, EP - ET)` after
+ * parsing `cm` from ciphertext as a `Poly Zt`.
+ */
+RoundPoly_ZtToZp : Poly Zt -> Poly Zp
+RoundPoly_ZtToZp cm =
+    [ (((zero : [ep - et]) # (cm @ i)) << (`ep - `et)) | i <- [0 .. 255] ]
+
+property RoundPoly_ZtToZpProperty (cm : Poly Zt) =
+    RoundPoly_ZtToZp cm ==
+      [ (((zero : [ep - et]) # (cm @ i)) << (`ep - `et)) | i <- [0 .. 255] ]
+
+/**
+ * Round a polynomial from Zp (EP-bit coefficients) to Zt (ET-bit coefficients).
+ * Each coefficient is effectively divided by 2^(EP - ET) with truncation.
+ */
+RoundPoly_ZpToZt : Poly Zp -> Poly Zt
+RoundPoly_ZpToZt polyZp =
+    [ drop`{ep - et} (polyZp @ i) >> (`ep - `et) | i <- [0 .. 255] ]
+
+property RoundPoly_ZpToZtProperty (polyZp : Poly Zp) =
+    RoundPoly_ZpToZt polyZp ==
+      [ drop`{ep - et} (polyZp @ i) >> (`ep - `et) | i <- [0 .. 255] ]
+
+/**
+ * Lift a polynomial from `Z2` (1-bit coefficients) to `Zp` (EP-bit coefficients).
+ * Each 0/1 coefficient becomes a full `EP`-bit coefficient in Zp.
+ */
+RoundPoly_Z2ToZp : Poly Z2 -> Poly Zp
+RoundPoly_Z2ToZp polyZ2 =
+    [ ((zero : [ep - 1]) # (polyZ2 @ i)) : [ep] | i <- [0 .. 255] ]
+
+property RoundPoly_Z2ToZpProperty (polyZ2 : Poly Z2) =
+    RoundPoly_Z2ToZp polyZ2 ==
+      [ ((zero : [ep - 1]) # (polyZ2 @ i)) : [ep] | i <- [0 .. 255] ]
 
 /**
  * Function to split a PKE public key into its two constituent parts:
@@ -103,7 +146,7 @@ RoundPoly_ZqToZp poly =
 SplitPublicKey : 
   ByteString indcpaPublicKeyBytes ->
   (ByteString seedBytes, ByteString (indcpaPublicKeyBytes - seedBytes)) 
-SplitPublicKey publicKey = (seedA, publicKey)
+SplitPublicKey publicKey = (seedA, pkBytes)
   where
-    seedA   = take seedBytes publicKey
-    pkBytes = drop seedBytes publicKey
+    seedA   = take`{seedBytes} publicKey
+    pkBytes = drop`{seedBytes} publicKey

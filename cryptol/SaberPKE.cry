@@ -48,27 +48,29 @@ PKE_Enc :
 PKE_Enc m seedS publicKey = ciphertext
   where
     // Split public key into constituent parts
-    (seedA, pkBytes) = splitPublicKey publicKey
+    (seedA, pkBytes) = SplitPublicKey publicKey
 
-    // Generate A from seedA
+    // Generate A from seedA, and secret vector s' from seedS
     _A = GenMatrix_Zq seedA : PolyMatrix_Zq
-
-    // Generate secret vector s'
     s' = GenSecret_Zq seedS : PolyVec_Zq
 
-    // Compute b' = A * s' + h
+    // Compute b' = A * s' + h, then round
     b' = (MatrixVectorMul _A s') + h : PolyVec_Zq
-
-    // Shift coefficients of each polynomial (effectively rounding)
     b'p = [ RoundPoly_ZqToZp (b' @ i) | i <- [0..l-1] ]
 
     // Decode the public key vector
     b = BS2PolyVec pkBytes : PolyVec_Zp
 
     // Compute the inner product v' (polynomial w/ coefficients in Zp)
-    s'' = [ RoundPoly_ZqToZp (s' @ i) | i <- [0..l-1] ]
-    v' = InnerProd b s' : Poly_Zp
+    s'' = [ RoundPoly_ZqToZp (s' @ i) | i <- [0..l-1] ] : PolyVec_Zp
+    v' = InnerProd b s'' : Poly_Zp
 
-    // Convert message to polynomial
-    mp = BS2Poly m : Poly_Z2
-    mp = RoundPoly_ZqToZp
+    // Convert message to polynomial & Lift to Zp and shift left by (EP - 1)
+    mpZ2 = BS2Poly m : Poly_Z2
+    mp = [ (RoundPoly_Z2ToZp (mpZ2) @ i) << (`ep - 1) | i <- [0..255] ] : Poly Zp 
+
+    // Compute ciphertext polynomial component
+    cm = RoundPoly_ZpToZt [ (v' @ i) - (mp @ i) + (h1 @ i) | i <- [0..255] ] : Poly Zt
+
+    // Concatenate cm and the rounded b' vector to form the final ciphertext
+    ciphertext = (Poly2BS cm) # (PolyVec2BS b'p) : ByteString indcpaBytes

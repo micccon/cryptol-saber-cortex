@@ -18,3 +18,4 @@ type indcpaSecretKeyBytes = 1248
 type publicKeyBytes       = 992
 type secretKeyBytes       = 2304
 type bytesCCADec          = 1088
+type indcpaBytes          = 1088   // Byte length of the PKE ciphertext
