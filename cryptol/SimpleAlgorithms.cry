@@ -27,3 +27,13 @@ property PolyShiftRightNProperty =
         where
             poly = [0, 1, 2, 3] : Poly 4 Zq
             shift = 2
+
+// Byte String to polynomial
+BS2Poly:
+    {k}
+    (fin k)
+    => ByteString (k * 32) -> Poly 256 [k]
+BS2Poly byteString = split`{each=k} (join byteString)
+
+property BS2PolyProperty (byteString : ByteString (4 * 32)) =
+    BS2Poly `{4} byteString == split`{each=4} (join byteString)
