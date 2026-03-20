@@ -22,18 +22,15 @@ type Poly_Zt = Poly Zt
 type Poly_Z2 = Poly Z2
 
 // Vector types of l polynomials
-type VecPoly t = [l] (Poly t)
-type VecPoly_Zq = VecPoly Zq
-type VecPoly_Zp = VecPoly Zp
-type VecPoly_Zt = VecPoly Zt
-type VecPoly_Z2 = VecPoly Z2
+type PolyVec t = [l] (Poly t)
+type PolyVec_Zq = PolyVec Zq
+type PolyVec_Zp = PolyVec Zp
+type PolyVec_Zt = PolyVec Zt
+type PolyVec_Z2 = PolyVec Z2
 
 // Matrix types of l x l polynomials
-type MatrixPoly t = [l] (VecPoly t)
-type MatrixPoly_Zq = MatrixPoly Zq
-type MatrixPoly_Zp = MatrixPoly Zp
-type MatrixPoly_Zt = MatrixPoly Zt
-type MatrixPoly_Z2 = MatrixPoly Z2
-
-
-
+type PolyMatrix t = [l] (PolyVec t)
+type PolyMatrix_Zq = PolyMatrix Zq
+type PolyMatrix_Zp = PolyMatrix Zp
+type PolyMatrix_Zt = PolyMatrix Zt
+type PolyMatrix_Z2 = PolyMatrix Z2

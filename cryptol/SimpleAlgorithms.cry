@@ -30,7 +30,7 @@ property PolyShiftRightNProperty (poly : Poly Zq) =
 BS2Poly:
     {k}
     (fin k)
-    => ByteString (k * 32) -> Poly [k]
+    => ByteString (k * 256/8) -> Poly [k]
 BS2Poly byteString = split`{each=k} (join byteString)
 
 property BS2PolyProperty (byteString : ByteString (4 * 32)) =
@@ -40,19 +40,25 @@ property BS2PolyProperty (byteString : ByteString (4 * 32)) =
 Poly2BS:
     {k}
     (fin k)
-    => Poly [k] -> ByteString (k * 32)
+    => Poly [k] -> ByteString (k * 256/8)
 Poly2BS polynomial = split`{each=8} (join polynomial)
 
 property Poly2BSProperty (polynomial : Poly [4]) =
     Poly2BS `{4} polynomial == split`{each=8} (join polynomial)
 
-// BS to vector of polynomials
-// Byte String to polynomial
+// Byte String to vector of polynomials
 BS2VecPoly:
     {k}
     (fin k)
-    => ByteString (k * 256/8 * l) -> VecPoly [k]
+    => ByteString (l * k * 256/8) -> VecPoly [k]
 BS2VecPoly byteString = [ BS2Poly polyByteString | polyByteString <- (split`{parts=l} byteString) ]
 
 property BS2VecPolyProperty (byteString : ByteString (4 * 256/8 * l)) =
     BS2VecPoly `{4} byteString == [ BS2Poly `{4} polyByteString | polyByteString <- (split`{parts=l} byteString) ]
+
+// Vector of polynomials to Byte String
+VecPoly2BS:
+    {k}
+    (fin k)
+    => VecPoly [k] -> ByteString (l*256*k/8)
+VecPoly2BS v = join (reverse [ Poly2BS p | p <- v ])

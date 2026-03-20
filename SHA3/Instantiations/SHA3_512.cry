@@ -1,0 +1,10 @@
+/**
+ * Instantiation of SHA3-512.
+ *
+ * @copyright Galois Inc.
+ * @author Ajay Kumar Eeralla
+ */
+module SHA3_512 where
+
+import SHA3 where
+    type digest = 512

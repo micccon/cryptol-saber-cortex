@@ -1,0 +1,10 @@
+/**
+ * Instantiation of SHA3-256.
+ *
+ * @copyright Galois Inc.
+ * @author Ajay Kumar Eeralla
+ */
+module SHA3_256 where
+
+import SHA3 where
+    type digest = 256
