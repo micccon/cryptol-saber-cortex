@@ -93,3 +93,17 @@ ConstPolyMatrix elementVal = [ ConstPolyVec elementVal | _ <- [0 .. l - 1] ]
 RoundPoly_ZqToZp : Poly Zq -> Poly Zp
 RoundPoly_ZqToZp poly =
     [ drop`{eq - ep} ((poly @ i) >> (`eq - `ep)) | i <- [0 .. 255] ]
+
+/**
+ * Function to split a PKE public key into its two constituent parts:
+ * 
+ * 1) seedA  [seed to generate matrix A]
+ * 2) pk     [public key]
+ */
+SplitPublicKey : 
+  ByteString indcpaPublicKeyBytes ->
+  (ByteString seedBytes, ByteString (indcpaPublicKeyBytes - seedBytes)) 
+SplitPublicKey publicKey = (seedA, publicKey)
+  where
+    seedA   = take seedBytes publicKey
+    pkBytes = drop seedBytes publicKey

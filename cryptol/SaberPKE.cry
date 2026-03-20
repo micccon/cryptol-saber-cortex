@@ -40,3 +40,35 @@ property PKE_KeyGenProperty =
     bp = [ RoundPoly_ZqToZp (b @ i) | i <- [0..l-1] ] : PolyVec_Zp
 
 
+PKE_Enc : 
+  ByteString (256/8) ->
+  ByteString seedBytes ->
+  ByteString indcpaPublicKeyBytes ->
+  ByteString indcpaBytes
+PKE_Enc m seedS publicKey = ciphertext
+  where
+    // Split public key into constituent parts
+    (seedA, pkBytes) = splitPublicKey publicKey
+
+    // Generate A from seedA
+    _A = GenMatrix_Zq seedA : PolyMatrix_Zq
+
+    // Generate secret vector s'
+    s' = GenSecret_Zq seedS : PolyVec_Zq
+
+    // Compute b' = A * s' + h
+    b' = (MatrixVectorMul _A s') + h : PolyVec_Zq
+
+    // Shift coefficients of each polynomial (effectively rounding)
+    b'p = [ RoundPoly_ZqToZp (b' @ i) | i <- [0..l-1] ]
+
+    // Decode the public key vector
+    b = BS2PolyVec pkBytes : PolyVec_Zp
+
+    // Compute the inner product v' (polynomial w/ coefficients in Zp)
+    s'' = [ RoundPoly_ZqToZp (s' @ i) | i <- [0..l-1] ]
+    v' = InnerProd b s' : Poly_Zp
+
+    // Convert message to polynomial
+    mp = BS2Poly m : Poly_Z2
+    mp = RoundPoly_ZqToZp
