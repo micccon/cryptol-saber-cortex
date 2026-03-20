@@ -94,3 +94,18 @@ RoundPoly_ZqToZp : Poly Zq -> Poly Zp
 RoundPoly_ZqToZp poly =
     [ drop`{eq - ep} ((poly @ i) >> (`eq - `ep)) | i <- [0 .. 255] ]
 
+/**
+ * Lift a polynomial from `Zt` to `Zp` and shift each coefficient left by
+ * `ep - et` bits.
+ *
+ * This matches Saber decryption step `cm = SHIFTLEFT(cm, EP - ET)` after
+ * parsing `cm` from ciphertext as a `Poly Zt`.
+ */
+RoundPoly_ZtToZp : Poly Zt -> Poly Zp
+RoundPoly_ZtToZp cm =
+    [ (((zero : [ep - et]) # (cm @ i)) << (`ep - `et)) | i <- [0 .. 255] ]
+
+property RoundPoly_ZtToZpProperty (cm : Poly Zt) =
+    RoundPoly_ZtToZp cm ==
+      [ (((zero : [ep - et]) # (cm @ i)) << (`ep - `et)) | i <- [0 .. 255] ]
+
