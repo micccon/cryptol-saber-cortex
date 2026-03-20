@@ -46,22 +46,86 @@ Poly2BS polynomial = split`{each=8} (join polynomial)
 property Poly2BSProperty (polynomial : Poly [4]) =
     Poly2BS `{4} polynomial == split`{each=8} (join polynomial)
 
+
+//==========================================================================
+/** 
+ * If BS2Poly and Poly2BS are implemented correctly, then either function
+ * should act as the "inverse" to the other. These properties prove that 
+ * formally. 
+ *
+ * The first proves that BS2Poly "undoes" Poly2BS.
+ * The second proves that Poly2BS "undoes" BS2Poly.
+ */
+property Poly2BS_BS2Poly_RoundTrip_4 (p : Poly [4]) =
+    BS2Poly `{4} (Poly2BS `{4} p) == p
+property BS2Poly_Poly2BS_RoundTrip_4 (bs : ByteString (4 * 256/8)) =
+        Poly2BS `{4} (BS2Poly `{4} bs) == bs
+//==========================================================================
+
+
 // Byte String to vector of polynomials
-BS2VecPoly:
+BS2PolyVec:
     {k}
     (fin k)
-    => ByteString (l * k * 256/8) -> VecPoly [k]
-BS2VecPoly byteString = [ BS2Poly polyByteString | polyByteString <- (split`{parts=l} byteString) ]
+    => ByteString (l * k * 256/8) -> PolyVec [k]
+BS2PolyVec byteString = [ BS2Poly polyByteString | polyByteString <- (split`{parts=l} byteString) ]
 
-property BS2VecPolyProperty (byteString : ByteString (4 * 256/8 * l)) =
-    BS2VecPoly `{4} byteString == [ BS2Poly `{4} polyByteString | polyByteString <- (split`{parts=l} byteString) ]
+property BS2PolyVecProperty (byteString : ByteString (4 * 256/8 * l)) =
+    BS2PolyVec `{4} byteString == [ BS2Poly `{4} polyByteString | polyByteString <- (split`{parts=l} byteString) ]
 
-// Polynomial to Byte String
+// Vector of polynomials to Byte String
 PolyVec2BS:
     {k}
     (fin k)
-    => VecPoly [k] -> ByteString (k * 32 * l)
-PolyVec2BS vector = join [ Poly2BS poly | poly <- vector]
+    => PolyVec [k] -> ByteString (l * k * 256/8)
+PolyVec2BS vector =
+    join [ Poly2BS poly | poly <- vector ]
 
-property PolyVec2BSProperty (vector : VecPoly [4]) =
-    PolyVec2BS `{4} vector == join [ Poly2BS `{4} poly | poly <- vector]
+property PolyVec2BSProperty (vector : PolyVec [4]) =
+    PolyVec2BS `{4} vector == join [ Poly2BS `{4} poly | poly <- vector ]
+
+
+//==========================================================================
+/** 
+ * If BS2PolyVec and PolyVec2BS are implemented correctly, then either function
+ * should act as the "inverse" to the other. These properties prove that 
+ * formally. 
+ *
+ * The first proves that BS2PolyVec "undoes" PolyVec2BS.
+ * The second proves that PolyVec2BS "undoes" BS2PolyVec.
+ */
+ property PolyVec2BS_BS2PolyVec_RoundTrip_4 (v : PolyVec [4]) =
+    BS2PolyVec `{4} (PolyVec2BS `{4} v) == v
+property BS2PolyVec_PolyVec2BS_RoundTrip_4 (bs : ByteString (l * 4 * 256/8)) =
+    PolyVec2BS `{4} (BS2PolyVec `{4} bs) == bs
+//==========================================================================
+
+
+/** 
+ * please god oh please god not negacyclic convolution
+ * anything but negacyclic convolution please i beg of u
+ * ...
+ * i really hope this is right
+ */
+
+// (Negacyclic) Polynomial multiplication in Rp or Rq, depending on modulus
+PolyMul : {t} (fin t) => Poly [t] -> Poly [t] -> Poly [t]
+PolyMul a b =
+  [ sum [ contrib i c | i <- [0 .. 255] ] | c <- [0 .. 255] ]
+  where
+    contrib i c =
+      if i <= c
+      then (a @ i) * (b @ j)
+      else negate ((a @ i) * (b @ j))
+      where
+        j = (c - i) % 256
+
+property PolyMulProperty (a : Poly Zq) (b : Poly Zq) =
+    PolyMul a b == [ sum [ contrib i c | i <- [0 .. 255] ] | c <- [0 .. 255] ]
+  where
+    contrib i c =
+      if i <= c
+      then (a @ i) * (b @ j)
+      else negate ((a @ i) * (b @ j))
+      where
+        j = (c - i) % 256
