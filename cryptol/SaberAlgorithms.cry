@@ -12,12 +12,12 @@ import SaberHelpers
  */
 PolyShiftLeftN:
     {t}
-    (Zero t)
-    => Poly t -> Integer -> Poly t
-PolyShiftLeftN poly shift = poly << shift
+    (fin t)
+    => Poly [t] -> Integer -> Poly [t]
+PolyShiftLeftN poly shift = [ poly @ i << shift | i <- [0 .. 255] ]
 
 property PolyShiftLeftNProperty (poly : Poly Zq) =
-    PolyShiftLeftN poly shift == poly << shift
+    PolyShiftLeftN poly shift == [ poly @ i << shift | i <- [0 .. 255] ]
         where
             shift = 2
 
@@ -29,12 +29,12 @@ property PolyShiftLeftNProperty (poly : Poly Zq) =
  */
 PolyShiftRightN:
     {t}
-    (Zero t)
-    => Poly t -> Integer -> Poly t
-PolyShiftRightN poly shift = poly >> shift
+    (fin t)
+    => Poly [t] -> Integer -> Poly [t]
+PolyShiftRightN poly shift = [ poly @ i >> shift | i <- [0 .. 255] ]
 
 property PolyShiftRightNProperty (poly : Poly Zq) =
-    PolyShiftRightN poly shift == poly >> shift
+    PolyShiftRightN poly shift == [ poly @ i >> shift | i <- [0 .. 255] ]
         where
             shift = 2
 
@@ -128,10 +128,6 @@ property BS2PolyVec_PolyVec2BS_RoundTrip_4 (bs : ByteString (l * 4 * 256/8)) =
     PolyVec2BS `{4} (BS2PolyVec `{4} bs) == bs
 
 
-/** 
- * please god oh please god not negacyclic convolution
- * anything but negacyclic convolution please i beg of u
- */
 
 /**
  * Compute negacyclic polynomial multiplication modulo `x^256 + 1`.

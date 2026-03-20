@@ -18,10 +18,12 @@ PKE_KeyGen = (publicKey, secretKey)
     s = GenSecret_Zq seedS
 
     b = (MatrixVectorMul (transpose _A) s) + h : PolyVec_Zq
-    bp = [ PolyShiftRightN (b @ i) (`eq - `ep) | i <- [0..l-1] ] : PolyVec_Zq
+    bp = [ RoundPoly_ZqToZp (b @ i) | i <- [0..l-1] ] : PolyVec_Zp
 
     secretKey = PolyVec2BS s : ByteString indcpaSecretKeyBytes
 
     pk = PolyVec2BS bp
     publicKey : ByteString indcpaPublicKeyBytes
-    publicKey = seedA # pk
+    publicKey = seedA # pk : ByteString indcpaPublicKeyBytes
+
+
