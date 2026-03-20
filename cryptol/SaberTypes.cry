@@ -27,8 +27,3 @@ type VecPoly_Zq = VecPoly 256 Zq
 type VecPoly_Zp = VecPoly 256 Zp
 type VecPoly_Zt = VecPoly 256 Zt
 type VecPoly_Z2 = VecPoly 256 Z2
-
-
-
-
-
