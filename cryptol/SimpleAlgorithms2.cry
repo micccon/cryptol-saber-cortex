@@ -78,11 +78,11 @@ PolyVec2BS:
     {k}
     (fin k)
     => PolyVec [k] -> ByteString (l * k * 256/8)
-PolyVec2BS v =
+PolyVec2BS vector =
     join [ Poly2BS poly | poly <- vector ]
 
-property PolyVec2BSProperty (v : PolyVec [4]) =
-    PolyVec2BS `{4} v == join [ Poly2BS `{4} poly | poly <- vector ]
+property PolyVec2BSProperty (vector : PolyVec [4]) =
+    PolyVec2BS `{4} vector == join [ Poly2BS `{4} poly | poly <- vector ]
 
 
 //==========================================================================
@@ -101,4 +101,21 @@ property BS2PolyVec_PolyVec2BS_RoundTrip_4 (bs : ByteString (l * 4 * 256/8)) =
 //==========================================================================
 
 
-/**/
+/** 
+ * please god oh please god not negacyclic convolution
+ * anything but negacyclic convolution please i beg of u
+ * ...
+ * i really hope this is right
+ */
+
+// (Negacyclic) Polynomial multiplication in Rp or Rq, depending on modulus
+PolyMul : {t} (fin t) => Poly [t] -> Poly [t] -> Poly [t]
+PolyMul a b =
+    [ sum [ contrib i j c | i <- [0..255], j <- [0..255] ] | c <- [0..255] ]
+  where
+    contrib i j c =
+      if (i + j) % 256 == c
+      then if (i + j) < 256
+           then (a @ i) * (b @ j)
+           else negate ((a @ i) * (b @ j))
+      else 0
