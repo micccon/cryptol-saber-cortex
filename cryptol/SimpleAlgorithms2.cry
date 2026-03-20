@@ -94,7 +94,7 @@ property PolyVec2BSProperty (vector : PolyVec [4]) =
  * The first proves that BS2PolyVec "undoes" PolyVec2BS.
  * The second proves that PolyVec2BS "undoes" BS2PolyVec.
  */
- property PolyVec2BS_BS2PolyVec_RoundTrip_4 (v : PolyVec [4]) =
+property PolyVec2BS_BS2PolyVec_RoundTrip_4 (v : PolyVec [4]) =
     BS2PolyVec `{4} (PolyVec2BS `{4} v) == v
 property BS2PolyVec_PolyVec2BS_RoundTrip_4 (bs : ByteString (l * 4 * 256/8)) =
     PolyVec2BS `{4} (BS2PolyVec `{4} bs) == bs
@@ -119,3 +119,16 @@ PolyMul a b =
            then (a @ i) * (b @ j)
            else negate ((a @ i) * (b @ j))
       else 0
+
+// Faster implementation of above function
+PolyMulFast : {t} (fin t) => Poly [t] -> Poly [t] -> Poly [t]
+PolyMulFast a b =
+    [ sum [ contrib i c | i <- [0..255] ] | c <- [0..255] ]
+  where
+    contrib i c =
+      if i <= c
+      then (a @ i) * (b @ j)
+      else negate ((a @ i) * (b @ j))
+      where
+        j = (c - i) % 256
+
