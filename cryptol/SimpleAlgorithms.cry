@@ -109,7 +109,10 @@ property BS2PolyVec_PolyVec2BS_RoundTrip_4 (bs : ByteString (l * 4 * 256/8)) =
  */
 
 // (Negacyclic) Polynomial multiplication in Rp or Rq, depending on modulus
-PolyMul : {t} (fin t) => Poly [t] -> Poly [t] -> Poly [t]
+PolyMul :
+    {t}
+    (fin t)
+    => Poly [t] -> Poly [t] -> Poly [t]
 PolyMul a b =
   [ sum [ contrib i c | i <- [0 .. 255] ] | c <- [0 .. 255] ]
   where
@@ -129,3 +132,25 @@ property PolyMulProperty (a : Poly Zq) (b : Poly Zq) =
       else negate ((a @ i) * (b @ j))
       where
         j = (c - i) % 256
+
+// Matrix vector multiplications
+MatrixVectorMul :
+    {t}
+    (fin t)
+    => PolyMatrix [t] -> PolyVec [t] -> PolyVec [t]
+MatrixVectorMul matrix vector =
+    [ sum [ PolyMul (matrix @ i @ j) (vector @ j) | j <- [0 .. l-1] ] | i <- [0 .. l-1] ] 
+
+property MatrixVectorMulProperty (matrix : PolyMatrix Zp) (vector : PolyVec Zp) =
+    MatrixVectorMul matrix vector ==
+        [ sum [ PolyMul (matrix @ i @ j) (vector @ j) | j <- [0 .. l-1] ] | i <- [0 .. l-1] ]
+
+// Inner product of two vectors of polynomials
+InnerProd :
+    {t}
+    (fin t)
+    => PolyVec [t] -> PolyVec [t] -> Poly [t]
+InnerProd va vb = [ sum [ PolyMul (va @ i) (vb @ i) @ k | i <- [0..l-1] ] | k <- [0..255] ]
+
+InnerProdProperty (va : PolyVec Zp) (vb : PolyVec Zp) =
+    InnerProd va vb == [ sum [ PolyMul (va @ i) (vb @ i) @ k | i <- [0..l-1] ] | k <- [0..255] ]

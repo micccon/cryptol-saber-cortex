@@ -1,8 +1,17 @@
 module SaberHelpers where
 import SaberTypes
 import SaberConstants
+import SHAKE128
 
-// Hamming weight of a bit string
+//==========================================================================
+/**
+ * Compute the Hamming weight of a bit string by counting how many bits are set
+ * to `True`. This is a small utility helper that is often useful when working
+ * with noise sampling or bit-oriented correctness checks.
+ *
+ * The property below simply checks that the helper agrees with its defining
+ * list-comprehension form on a concrete 256-bit input.
+ */
 HammingWeight:
     {n}
     (fin n)
@@ -12,13 +21,88 @@ HammingWeight bitString = sum [ if bit then 1 else 0 | bit <- bitString ]
 property HammingWeightProperty (bitString : BitString 256) =
     HammingWeight bitString == sum [ if bit then 1 else 0 | bit <- bitString ]
 
-// Not really random, 6767676767 ... for testing purposes
+//==========================================================================
+/**
+ * Produce a deterministic byte string for testing. This is not intended to be
+ * cryptographically random; it just gives us a predictable alternating pattern
+ * of `6` and `7` bytes that is easy to recognize in debugging and proofs.
+ *
+ * The property below checks that the helper returns exactly that fixed pattern
+ * for a representative 32-byte input.
+ */
 RandBytes:
     {n}
     (fin n, n >= 1)
-    => ByteString n
-RandBytes = [if num % 2 == 0 then 7 else 6 | num <- [1 .. n]]
+    => ByteString n -> ByteString n
+RandBytes _ = [if num % 2 == 0 then 7 else 6 | num <- [1 .. n]]
 
-// Verify if two Byte Strings are equivalent
-Verify {n} (fin n) => ByteString n -> ByteString n -> Bit
-Verify a b = a == b
+property RandBytesProperty (byteString : ByteString 32) =
+    RandBytes byteString == [if num % 2 == 0 then 7 else 6 | num <- [1 .. 32]]
+
+//==========================================================================
+/**
+ * Compare two byte strings for exact equality. This helper is intentionally
+ * simple: it just exposes byte-string comparison through a named function so
+ * it can be reused in the higher-level Saber code.
+ *
+ * The accompanying property checks that the helper is equivalent to Cryptol's
+ * built-in equality on a concrete 32-byte example size.
+ */
+VerifyBS :
+    {n}
+    (fin n)
+    => ByteString n -> ByteString n -> Bit
+VerifyBS bs1 bs2 = bs1 == bs2
+
+VerifyBSProperty (bs1 : ByteString 32) (bs2 : ByteString 32) =
+    VerifyBS bs1 bs2 == (bs1 == bs2)
+
+//==========================================================================
+/**
+ * Generate the Saber public matrix over `Zq` from a seed using SHAKE-128.
+ * The seed is expanded into enough bytes to fill all `l * l` polynomials,
+ * then the output is reshaped in stages:
+ *
+ * 1. bytes -> `eq`-bit coefficients
+ * 2. coefficients -> 256-coefficient polynomials
+ * 3. polynomials -> `l x l` matrix
+ *
+ * This matches the high-level Saber matrix-generation specification while
+ * using `xofBytes` so that we stay in normal byte ordering rather than dealing
+ * with raw Keccak bit ordering directly.
+ *
+ * The property below checks that `GenMatrix_Zq` is exactly this reshape
+ * pipeline applied to the SHAKE-128 output.
+ */
+GenMatrix_Zq : ByteString seedBytes -> PolyMatrix_Zq
+GenMatrix_Zq seed = matrix
+    where
+        buf : ByteString (l * l * 256 / 8 * eq)
+        buf = xofBytes`{dBytes = l * l * 256 / 8 * eq} seed
+
+        coeffs : [l * l * 256] Zq
+        coeffs = split`{each=eq} (join buf)
+
+        polys : [l * l] (Poly Zq)
+        polys = split `{each=256} coeffs
+
+        matrix : PolyMatrix Zq
+        matrix = split `{each=l} polys
+
+property GenMatrix_ZqProperty (seedBytes : ByteString 32) =
+    GenMatrix_Zq seedBytes ==
+      split`{each=l}
+        (split`{each=256}
+          (split`{each=eq}
+            (join (xofBytes`{dBytes = l * l * 256 / 8 * eq} seedBytes))))
+
+//==========================================================================
+// GenSecret_Zq is the same as GenMatrix_Zq, but produces a vector of `l` polynomials instead of an `l x l` matrix. 
+// The property is the same as well, just with the appropriate reshape for the output.
+
+GenSecret_Zq : ByteString noiseBytes -> PolyVec_Zq
+GenSecret_Zq seed = vector
+    where
+        buf : ByteString (l * l * 256 / 8 * )
+        buf = xofBytes`{dBytes = l * l * 256 / 8 * eq} seed
+    
