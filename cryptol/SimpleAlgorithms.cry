@@ -37,3 +37,13 @@ BS2Poly byteString = split`{each=k} (join byteString)
 
 property BS2PolyProperty (byteString : ByteString (4 * 32)) =
     BS2Poly `{4} byteString == split`{each=4} (join byteString)
+
+// Polynomial to Byte String
+Poly2BS:
+    {k}
+    (fin k)
+    => Poly 256 [k] -> ByteString (k * 32)
+Poly2BS polynomial = split`{each=8} (join polynomial)
+
+property Poly2BSProperty (polynomial : Poly 256 [4]) =
+    Poly2BS `{4} polynomial == split`{each=8} (join polynomial)
