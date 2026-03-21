@@ -104,7 +104,7 @@ PKE_Enc m seedS publicKey = ciphertext
     cm = RoundPoly_ZpToZt [ (v' @ i) - (mp @ i) + (h1 @ i) | i <- [0..255] ] : Poly Zt
 
     // Concatenate cm and the rounded b' vector to form the final ciphertext
-    ciphertext = (Poly2BS cm) # (PolyVec2BS b'p) : ByteString indcpaBytes
+    ciphertext = (Poly2BS cm) # (PolyVec2BS b'p) : ByteString bytesCCADec
 
 property PKE_EncDecRoundTrip
     (m : ByteString (256 / 8))

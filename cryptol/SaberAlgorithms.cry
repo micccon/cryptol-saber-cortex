@@ -226,7 +226,7 @@ property GenMatrix_ZqProperty (seedBytes : ByteString 32) =
     GenMatrix_Zq seedBytes ==
       split`{each=l}
         (split`{each=256}
-          (split`{each=eq}
+            (split`{each=eq}
             (join (xofBytes`{dBytes = l * l * 256 / 8 * eq} seedBytes))))
 
 exampleSeed32 : ByteString 32

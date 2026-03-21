@@ -1,0 +1,7 @@
+module SHA3Bytes256 where
+
+import SHA3 where
+  type digest = 256
+
+Hash256Bytes : {m} (fin m) => [m][8] -> [32][8]
+Hash256Bytes input = hashBytes input

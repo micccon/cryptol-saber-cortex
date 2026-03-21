@@ -3,10 +3,138 @@ import SaberTypes
 import SaberConstants
 import SaberPKE
 import SaberHelpers
-import SHAKE128
 import SaberAlgorithms
+import SHA3Bytes256
+import SHA3Bytes512
 
 //==========================================================================
 
 KEM_KeyGen :
-    ByteString 
+    (ByteString publicKeyBytes, ByteString secretKeyBytes)
+KEM_KeyGen = (publicKey, secretKey)
+  where
+    (pKey, sKey) = PKE_KeyGen
+
+    hash_pk : ByteString 32
+    hash_pk = Hash256Bytes pKey
+
+    z : ByteString keyBytes
+    z = RandBytes `keyBytes
+
+    secretKey = z # hash_pk # pKey # sKey
+    publicKey = pKey
+
+property KEM_KeyGenProperty =
+    KEM_KeyGen == (pKey, z # hash_pk # pKey # sKey)
+  where
+    (pKey, sKey) = PKE_KeyGen
+
+    hash_pk : ByteString 32
+    hash_pk = Hash256Bytes pKey
+
+    z : ByteString keyBytes
+    z = RandBytes `keyBytes
+
+KEM_KeyGenExample : Bit
+KEM_KeyGenExample = KEM_KeyGenProperty
+
+KEM_Encaps :
+    ByteString publicKeyBytes -> (ByteString keyBytes, ByteString bytesCCADec)
+KEM_Encaps publicKey = (sessionKey, ciphertext)
+  where
+    mRaw : ByteString keyBytes
+    mRaw = RandBytes `keyBytes
+
+    m : ByteString keyBytes
+    m = Hash256Bytes mRaw
+
+    hash_pk : ByteString keyBytes
+    hash_pk = Hash256Bytes publicKey
+
+    buf : ByteString (2 * keyBytes)
+    buf = hash_pk # m
+
+    rk : ByteString (2 * keyBytes)
+    rk = Hash512Bytes buf
+
+    r : ByteString keyBytes
+    r = take`{keyBytes} rk
+
+    k : ByteString keyBytes
+    k = drop`{keyBytes} rk
+
+    ciphertext : ByteString bytesCCADec
+    ciphertext = PKE_Enc m r publicKey
+
+    r' : ByteString keyBytes
+    r' = Hash256Bytes ciphertext
+
+    rk' : ByteString (2 * keyBytes)
+    rk' = r' # k
+
+    sessionKey : ByteString keyBytes
+    sessionKey = Hash256Bytes rk'
+
+KEM_Decaps :
+    ByteString bytesCCADec -> ByteString secretKeyBytes -> ByteString keyBytes
+KEM_Decaps ciphertext secretKey = sessionKey
+  where
+    z : ByteString keyBytes
+    z = take`{keyBytes} secretKey
+
+    secretKey1 : ByteString (secretKeyBytes - keyBytes)
+    secretKey1 = drop`{keyBytes} secretKey
+
+    hash_pk : ByteString keyBytes
+    hash_pk = take`{keyBytes} secretKey1
+
+    secretKey2 : ByteString (secretKeyBytes - 2 * keyBytes)
+    secretKey2 = drop`{keyBytes} secretKey1
+
+    publicKey : ByteString publicKeyBytes
+    publicKey = take`{publicKeyBytes} secretKey2
+
+    secretKeyCpa : ByteString indcpaSecretKeyBytes
+    secretKeyCpa = drop`{publicKeyBytes} secretKey2
+
+    m : ByteString keyBytes
+    m = PKE_Decrypt ciphertext secretKeyCpa
+
+    buf : ByteString (2 * keyBytes)
+    buf = hash_pk # m
+
+    rk : ByteString (2 * keyBytes)
+    rk = Hash512Bytes buf
+
+    r : ByteString keyBytes
+    r = take`{keyBytes} rk
+
+    k : ByteString keyBytes
+    k = drop`{keyBytes} rk
+
+    ciphertext' : ByteString bytesCCADec
+    ciphertext' = PKE_Enc m r publicKey
+
+    c : Bit
+    c = VerifyBS ciphertext' ciphertext
+
+    r' : ByteString keyBytes
+    r' = Hash256Bytes ciphertext
+
+    temp : ByteString (2 * keyBytes)
+    temp = if c then (r' # k) else (r' # z)
+
+    sessionKey : ByteString keyBytes
+    sessionKey = Hash256Bytes temp
+
+property KEM_EncapsDecapsRoundTrip =
+    KEM_Decaps ciphertext secretKey == sessionKey
+  where
+    (publicKey, secretKey) = KEM_KeyGen
+    (sessionKey, ciphertext) = KEM_Encaps publicKey
+
+property KEM_EncapsDecapsExample =
+  KEM_Decaps ciphertext secretKey == sessionKey
+  where
+    (publicKey, secretKey) = KEM_KeyGen
+    (sessionKey, ciphertext) = KEM_Encaps publicKey
