@@ -26,6 +26,13 @@ HammingWeight bitString = sum [ if bit then 1 else 0 | bit <- bitString ]
 property HammingWeightProperty (bitString : BitString 256) =
     HammingWeight bitString == sum [ if bit then 1 else 0 | bit <- bitString ]
 
+HammingWeight4 : BitString 4 -> Integer
+HammingWeight4 bits =
+    (if bits @ 0 then 1 else 0) +
+    (if bits @ 1 then 1 else 0) +
+    (if bits @ 2 then 1 else 0) +
+    (if bits @ 3 then 1 else 0)
+
 //==========================================================================
 /**
  * Produce a deterministic byte string for testing.
@@ -159,5 +166,5 @@ SplitPublicKey :
   (ByteString seedBytes, ByteString (indcpaPublicKeyBytes - seedBytes)) 
 SplitPublicKey publicKey = (seedA, pkBytes)
   where
-    seedA   = take`{seedBytes} publicKey
-    pkBytes = drop`{seedBytes} publicKey
+    pkBytes = take`{indcpaPublicKeyBytes - seedBytes} publicKey
+    seedA   = drop`{indcpaPublicKeyBytes - seedBytes} publicKey

@@ -258,7 +258,7 @@ GenSecret_Zq seed = vector
         pairs = map split`{parts=2} (split`{each=mu} (join buf))
 
         secretCoeffs : [l * 256] Zq
-        secretCoeffs = [ fromInteger (HammingWeight (k @ 0) - HammingWeight (k @ 1)) : Zq | k <- pairs ]
+        secretCoeffs = [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq | k <- pairs ]
 
         vector : PolyVec Zq
         vector = split`{parts = l} secretCoeffs
@@ -266,7 +266,7 @@ GenSecret_Zq seed = vector
 property GenSecret_ZqExample =
         GenSecret_Zq exampleSeed32 ==
             split`{parts=l}
-                [ fromInteger (HammingWeight (k @ 0) - HammingWeight (k @ 1)) : Zq
+                [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq
                 | k <- map split`{parts=2}
                                  (split`{each=mu}
                                      (join (xofBytes`{dBytes = l * 256 / 8 * mu} exampleSeed32)))
@@ -275,7 +275,7 @@ property GenSecret_ZqExample =
 property GenSecret_ZqProperty (noiseSeed : ByteString noiseSeedBytes) =
         GenSecret_Zq noiseSeed ==
             split`{parts=l}
-                [ fromInteger (HammingWeight (k @ 0) - HammingWeight (k @ 1)) : Zq
+                [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq
                 | k <- map split`{parts=2}
                                  (split`{each=mu}
                                      (join (xofBytes`{dBytes = l * 256 / 8 * mu} noiseSeed)))

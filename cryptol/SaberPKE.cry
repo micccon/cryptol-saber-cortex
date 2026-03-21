@@ -7,12 +7,13 @@ import SHAKE128
 
 //==========================================================================
 
-PKE_KeyGen : (ByteString indcpaPublicKeyBytes, ByteString  indcpaSecretKeyBytes)
-PKE_KeyGen = (publicKey, secretKey)
+PKE_KeyGenDet :
+    ByteString seedBytes ->
+    ByteString noiseSeedBytes ->
+    (ByteString indcpaPublicKeyBytes, ByteString  indcpaSecretKeyBytes)
+PKE_KeyGenDet seedAInput seedS = (publicKey, secretKey)
   where
-    _seedA = RandBytes `seedBytes : ByteString seedBytes
-    seedA = xofBytes`{dBytes = seedBytes} _seedA : ByteString seedBytes
-    seedS = RandBytes `noiseSeedBytes : ByteString noiseSeedBytes
+    seedA = xofBytes`{dBytes = seedBytes} seedAInput : ByteString seedBytes
 
     _A = GenMatrix_Zq seedA
     s = GenSecret_Zq seedS
@@ -24,10 +25,22 @@ PKE_KeyGen = (publicKey, secretKey)
 
     pk = PolyVec2BS bp
     publicKey : ByteString indcpaPublicKeyBytes
-    publicKey = seedA # pk : ByteString indcpaPublicKeyBytes
+    publicKey = pk # seedA : ByteString indcpaPublicKeyBytes
+
+PKE_KeyGen : (ByteString indcpaPublicKeyBytes, ByteString  indcpaSecretKeyBytes)
+PKE_KeyGen = PKE_KeyGenDet _seedA seedS
+  where
+    _seedA = RandBytes `seedBytes : ByteString seedBytes
+    seedS = RandBytes `noiseSeedBytes : ByteString noiseSeedBytes
+
+property PKE_KeyGenDetMatchesKeyGen =
+    PKE_KeyGenDet
+        (RandBytes `seedBytes : ByteString seedBytes)
+        (RandBytes `noiseSeedBytes : ByteString noiseSeedBytes) ==
+    PKE_KeyGen
 
 property PKE_KeyGenProperty =
-    PKE_KeyGen == (seedA # PolyVec2BS bp, PolyVec2BS s)
+    PKE_KeyGen == (PolyVec2BS bp # seedA, PolyVec2BS s)
   where
     _seedA = RandBytes `seedBytes : ByteString seedBytes
     seedA = xofBytes`{dBytes = seedBytes} _seedA : ByteString seedBytes

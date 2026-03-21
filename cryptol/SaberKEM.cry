@@ -9,23 +9,43 @@ import SHA3Bytes512
 
 //==========================================================================
 
-KEM_KeyGen :
+KEM_KeyGenDet :
+    ByteString seedBytes ->
+    ByteString noiseSeedBytes ->
+    ByteString keyBytes ->
     (ByteString publicKeyBytes, ByteString secretKeyBytes)
-KEM_KeyGen = (publicKey, secretKey)
+KEM_KeyGenDet seedAInput seedS z = (publicKey, secretKey)
   where
-    (pKey, sKey) = PKE_KeyGen
+    (pKey, sKey) = PKE_KeyGenDet seedAInput seedS
 
     hash_pk : ByteString 32
     hash_pk = Hash256Bytes pKey
 
+    secretKey = sKey # pKey # hash_pk # z
+    publicKey = pKey
+
+KEM_KeyGen :
+    (ByteString publicKeyBytes, ByteString secretKeyBytes)
+KEM_KeyGen = KEM_KeyGenDet seedAInput seedS z
+  where
+    seedAInput : ByteString seedBytes
+    seedAInput = RandBytes `seedBytes
+
+    seedS : ByteString noiseSeedBytes
+    seedS = RandBytes `noiseSeedBytes
+
     z : ByteString keyBytes
     z = RandBytes `keyBytes
 
-    secretKey = z # hash_pk # pKey # sKey
-    publicKey = pKey
+property KEM_KeyGenDetMatchesKeyGen =
+    KEM_KeyGenDet
+        (RandBytes `seedBytes : ByteString seedBytes)
+        (RandBytes `noiseSeedBytes : ByteString noiseSeedBytes)
+        (RandBytes `keyBytes : ByteString keyBytes) ==
+    KEM_KeyGen
 
 property KEM_KeyGenProperty =
-    KEM_KeyGen == (pKey, z # hash_pk # pKey # sKey)
+    KEM_KeyGen == (pKey, sKey # pKey # hash_pk # z)
   where
     (pKey, sKey) = PKE_KeyGen
 
@@ -38,13 +58,12 @@ property KEM_KeyGenProperty =
 KEM_KeyGenExample : Bit
 KEM_KeyGenExample = KEM_KeyGenProperty
 
-KEM_Encaps :
-    ByteString publicKeyBytes -> (ByteString keyBytes, ByteString bytesCCADec)
-KEM_Encaps publicKey = (sessionKey, ciphertext)
+KEM_EncapsDet :
+    ByteString keyBytes ->
+    ByteString publicKeyBytes ->
+    (ByteString keyBytes, ByteString bytesCCADec)
+KEM_EncapsDet mRaw publicKey = (sessionKey, ciphertext)
   where
-    mRaw : ByteString keyBytes
-    mRaw = RandBytes `keyBytes
-
     m : ByteString keyBytes
     m = Hash256Bytes mRaw
 
@@ -75,27 +94,34 @@ KEM_Encaps publicKey = (sessionKey, ciphertext)
     sessionKey : ByteString keyBytes
     sessionKey = Hash256Bytes rk'
 
+KEM_Encaps :
+    ByteString publicKeyBytes -> (ByteString keyBytes, ByteString bytesCCADec)
+KEM_Encaps publicKey = KEM_EncapsDet mRaw publicKey
+  where
+    mRaw : ByteString keyBytes
+    mRaw = RandBytes `keyBytes
+
 KEM_Decaps :
     ByteString bytesCCADec -> ByteString secretKeyBytes -> ByteString keyBytes
 KEM_Decaps ciphertext secretKey = sessionKey
   where
-    z : ByteString keyBytes
-    z = take`{keyBytes} secretKey
+    secretKeyCpa : ByteString indcpaSecretKeyBytes
+    secretKeyCpa = take`{indcpaSecretKeyBytes} secretKey
 
-    secretKey1 : ByteString (secretKeyBytes - keyBytes)
-    secretKey1 = drop`{keyBytes} secretKey
-
-    hash_pk : ByteString keyBytes
-    hash_pk = take`{keyBytes} secretKey1
-
-    secretKey2 : ByteString (secretKeyBytes - 2 * keyBytes)
-    secretKey2 = drop`{keyBytes} secretKey1
+    secretKey1 : ByteString (secretKeyBytes - indcpaSecretKeyBytes)
+    secretKey1 = drop`{indcpaSecretKeyBytes} secretKey
 
     publicKey : ByteString publicKeyBytes
-    publicKey = take`{publicKeyBytes} secretKey2
+    publicKey = take`{publicKeyBytes} secretKey1
 
-    secretKeyCpa : ByteString indcpaSecretKeyBytes
-    secretKeyCpa = drop`{publicKeyBytes} secretKey2
+    secretKey2 : ByteString (secretKeyBytes - indcpaSecretKeyBytes - publicKeyBytes)
+    secretKey2 = drop`{publicKeyBytes} secretKey1
+
+    hash_pk : ByteString keyBytes
+    hash_pk = take`{keyBytes} secretKey2
+
+    z : ByteString keyBytes
+    z = drop`{keyBytes} secretKey2
 
     m : ByteString keyBytes
     m = PKE_Decrypt ciphertext secretKeyCpa

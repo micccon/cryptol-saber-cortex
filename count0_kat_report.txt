@@ -1,0 +1,171 @@
+count = 0
+ct_match = False
+actual_ct_actual = <unable to extract>
+┏━╸┏━┓╻ ╻┏━┓╺┳╸┏━┓╻  
+┃  ┣┳┛┗┳┛┣━┛ ┃ ┃ ┃┃  
+┗━╸╹┗╸ ╹ ╹   ╹ ┗━┛┗━╸
+version 3.5.0
+https://cryptol.net  :? for help
+
+Loading module Cryptol
+Loading module SaberConstants
+Loading module SaberTypes
+Loading interface module Specification__parameter
+Loading module Specification
+Loading module KeccakBitOrdering
+Loading module SHAKE128
+Loading module SaberHelpers
+Loading module SaberAlgorithms
+Loading module SaberPKE
+Loading interface module SHA3__parameter
+Loading module SHA3
+Loading module SHA3Bytes256
+Loading module SHA3Bytes512
+Loading module SaberKEM
+Loading module TempSingleKAT
+TempSingleKAT> cryptol: Uncaught exception panic-0.4.0.1-a62067dfaa53e1957cc12191418df6bc08f4a8bdc9b104d4ae7e2dcb04d36872:Panic.Panic:
+
+You have encountered a bug in Cryptol's implementation.
+*** Please create an issue at https://github.com/GaloisInc/cryptol/issues
+
+%< --------------------------------------------------- 
+  Revision:  UNKNOWN
+  Branch:    UNKNOWN
+  Location:  [Reference Evaluator]literal
+  Message:   TCon (TC TCSeq) [TCon (TC (TCNum 3)) [],TCon (TC TCSeq) [TCon (TC (TCNum 256)) [],TCon (TC TCSeq) [TCon (TC (TCNum 13)) [],TCon (TC TCBit) []]]] cannot represent literals
+CallStack (from HasCallStack):
+  panic, called at src/Cryptol/Utils/Panic.hs:21:9 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Utils.Panic
+  panic, called at src/Cryptol/Eval/Reference.lhs:1960:19 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Eval.Reference
+%< --------------------------------------------------- 
+
+
+While handling You have encountered a bug in Cryptol's implementation.
+  | *** Please create an issue at https://github.com/GaloisInc/cryptol/issues
+  |
+  | %< --------------------------------------------------- 
+  |   Revision:  UNKNOWN
+  |   Branch:    UNKNOWN
+  |   Location:  [Reference Evaluator]literal
+  |   Message:   TCon (TC TCSeq) [TCon (TC (TCNum 3)) [],TCon (TC TCSeq) [TCon (TC (TCNum 256)) [],TCon (TC TCSeq) [TCon (TC (TCNum 13)) [],TCon (TC TCBit) []]]] cannot represent literals
+  | CallStack (from HasCallStack):
+  |   panic, called at src/Cryptol/Utils/Panic.hs:21:9 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Utils.Panic
+  |   panic, called at src/Cryptol/Eval/Reference.lhs:1960:19 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Eval.Reference
+  | %< --------------------------------------------------- 
+
+HasCallStack backtrace:
+  bracket, called at src/Cryptol/REPL/Monad.hs:293:3 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.REPL.Monad
+actual_ct_expected = 719FAC31AE90417F2DA1D37E47A065B860575D1DF2DE60814A39297B902AFA2F5A12A0D66ED34F3AFED294D40E8027102240798A9F3FB38E65BC93D0BE678AEB099CFF15D9D9D88239BC40E81FC74E5CC280E0495058F7AA36B333A0E8D801ECDBC94D5E12B80273A9B37F61E255AC8FCC54D8BCEEEC8829052FB820FA6F3F93C6B0D0D246A354602EE06294EE726DB763B290738D640682106A34DD44F238E33840BD7B01261E167D3ED6DF8FA0700642FA3016B38F29CDE00FA4615D97E62AE145C9003B54501636C8A2784F7F57ED0FD9CE128530F2272AF12137E1274256EAC34C0C901E64EDF50A484178B47C971ED4F021466AE7BAF8BB8CAA5B9978F05471D9DA472D383ED46C44656CDFBA6A03B974240DF6E10D6861293B71401DF58397BEB67BBE6B716BC196CE2D3E8B0A940F07C66FA947B08EA407C57499027015F52850C7BC680BEB3CA5953F90891C45B9894421A95F5A69ED66B00DBD4F9851AB8EE5F60923A61E984A3A632B41B0A1245976F1A8C9D0BB2FD61D4E9C41340BA47EEB595C20BFCB4B88FF0B19EEC0E934F8ED69394AF2042A84EE8CE170252D8DAEFE161132870B46DAE82F3A5F067F017C5FE47CFBD3845F94D8DADBDC6DB8BF72E96694FF624526EDAC214679721A4757E65F64BE73DDC8F81926D506719AA2FE5FC32FA45FFBE75EF6A758EACEB2C07506C4166462A0E6563D3853305B8804288F0D19D22EE96AADBB12086AF3E41CBC4B08D9190368F506630378E0AAC613F5DCB8A5C5BFB63A1AD837A6563478ABB6731E8ED660BCF0FBF38A85358451E4B188519E6D42C5E876617DC8C4F8D1DBD512032642F62DA3A3E7FE0133BD39EAA0996955C21B020446D0AD95F148AA6A36245510D998F1802A61438B30502604A666559FFD013EACAEF008382D7E586622E8C34AC866EADD99291E9B5F8E6C3675A55AFAA141B9ADC0947897555A80E2A5C3824C443954DEE5B77681695363B184B40FCF7824F58775DFB299B20CDDFA10A62E340D5B3B52D21B7C27FBFD79A8565E69838DCE5DE7560BB3D6ECE880D59722908F4931ECCEE163759C193FBC1D4E1F3B3496CE10705C8552D72EC1316940F0562C54C05D7CEFAA32630A7D3B08D9FDBE24A5DD0892DB51BEB4FC80729E0BCA84B9C22DBC56D48AEA6A116BF4965B432A895DAE2DB869B1FE648793984FA283FD96F35A5477A628E477DE7F00E7255D1D6B3F123486CF993726A53193AA9882E149EB35FE8E33D90A86FC6B4FCC68E4F514E3DFBC83771315D29D187C9FF7F95DA67F4F35B6DB697240ECAB1B92F5B89973AA8966DC8DD874FA8F76C9CEDE6A37657F7B7FFE14036B97BE0604E82C07A9280F206D8C1B52CFFA347C038E3946E72F5A526E27EB50AC351925BC5632A1464D0F41E3F57CAA3A426C2546F94F2A8DF9763FAF132B4F08AC06E9C8753B065D94AE275AA452588336B70183664D9C6D1B2070823226943FDA1D116CA2D766EE95B209ADD6BB64B9CEB9DD5EFF54E76EFDCB3F62773CA8F8AE7BF5
+
+ss_match = ERROR
+actual_ss_actual = <unable to extract>
+┏━╸┏━┓╻ ╻┏━┓╺┳╸┏━┓╻  
+┃  ┣┳┛┗┳┛┣━┛ ┃ ┃ ┃┃  
+┗━╸╹┗╸ ╹ ╹   ╹ ┗━┛┗━╸
+version 3.5.0
+https://cryptol.net  :? for help
+
+Loading module Cryptol
+Loading module SaberConstants
+Loading module SaberTypes
+Loading interface module Specification__parameter
+Loading module Specification
+Loading module KeccakBitOrdering
+Loading module SHAKE128
+Loading module SaberHelpers
+Loading module SaberAlgorithms
+Loading module SaberPKE
+Loading interface module SHA3__parameter
+Loading module SHA3
+Loading module SHA3Bytes256
+Loading module SHA3Bytes512
+Loading module SaberKEM
+Loading module TempSingleKAT
+TempSingleKAT> cryptol: Uncaught exception panic-0.4.0.1-a62067dfaa53e1957cc12191418df6bc08f4a8bdc9b104d4ae7e2dcb04d36872:Panic.Panic:
+
+You have encountered a bug in Cryptol's implementation.
+*** Please create an issue at https://github.com/GaloisInc/cryptol/issues
+
+%< --------------------------------------------------- 
+  Revision:  UNKNOWN
+  Branch:    UNKNOWN
+  Location:  [Reference Evaluator]literal
+  Message:   TCon (TC TCSeq) [TCon (TC (TCNum 3)) [],TCon (TC TCSeq) [TCon (TC (TCNum 256)) [],TCon (TC TCSeq) [TCon (TC (TCNum 13)) [],TCon (TC TCBit) []]]] cannot represent literals
+CallStack (from HasCallStack):
+  panic, called at src/Cryptol/Utils/Panic.hs:21:9 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Utils.Panic
+  panic, called at src/Cryptol/Eval/Reference.lhs:1960:19 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Eval.Reference
+%< --------------------------------------------------- 
+
+
+While handling You have encountered a bug in Cryptol's implementation.
+  | *** Please create an issue at https://github.com/GaloisInc/cryptol/issues
+  |
+  | %< --------------------------------------------------- 
+  |   Revision:  UNKNOWN
+  |   Branch:    UNKNOWN
+  |   Location:  [Reference Evaluator]literal
+  |   Message:   TCon (TC TCSeq) [TCon (TC (TCNum 3)) [],TCon (TC TCSeq) [TCon (TC (TCNum 256)) [],TCon (TC TCSeq) [TCon (TC (TCNum 13)) [],TCon (TC TCBit) []]]] cannot represent literals
+  | CallStack (from HasCallStack):
+  |   panic, called at src/Cryptol/Utils/Panic.hs:21:9 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Utils.Panic
+  |   panic, called at src/Cryptol/Eval/Reference.lhs:1960:19 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Eval.Reference
+  | %< --------------------------------------------------- 
+
+HasCallStack backtrace:
+  bracket, called at src/Cryptol/REPL/Monad.hs:293:3 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.REPL.Monad
+actual_ss_expected = 156533536C8435F82CC36FC1EF9528DEDC49223DDA0091617DC1ACAF6058D1CA
+
+decaps_match = ERROR
+decaps_ss_actual = <unable to extract>
+┏━╸┏━┓╻ ╻┏━┓╺┳╸┏━┓╻  
+┃  ┣┳┛┗┳┛┣━┛ ┃ ┃ ┃┃  
+┗━╸╹┗╸ ╹ ╹   ╹ ┗━┛┗━╸
+version 3.5.0
+https://cryptol.net  :? for help
+
+Loading module Cryptol
+Loading module SaberConstants
+Loading module SaberTypes
+Loading interface module Specification__parameter
+Loading module Specification
+Loading module KeccakBitOrdering
+Loading module SHAKE128
+Loading module SaberHelpers
+Loading module SaberAlgorithms
+Loading module SaberPKE
+Loading interface module SHA3__parameter
+Loading module SHA3
+Loading module SHA3Bytes256
+Loading module SHA3Bytes512
+Loading module SaberKEM
+Loading module TempSingleKAT
+TempSingleKAT> cryptol: Uncaught exception panic-0.4.0.1-a62067dfaa53e1957cc12191418df6bc08f4a8bdc9b104d4ae7e2dcb04d36872:Panic.Panic:
+
+You have encountered a bug in Cryptol's implementation.
+*** Please create an issue at https://github.com/GaloisInc/cryptol/issues
+
+%< --------------------------------------------------- 
+  Revision:  UNKNOWN
+  Branch:    UNKNOWN
+  Location:  [Reference Evaluator]literal
+  Message:   TCon (TC TCBit) [] cannot represent literals
+CallStack (from HasCallStack):
+  panic, called at src/Cryptol/Utils/Panic.hs:21:9 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Utils.Panic
+  panic, called at src/Cryptol/Eval/Reference.lhs:1960:19 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Eval.Reference
+%< --------------------------------------------------- 
+
+
+While handling You have encountered a bug in Cryptol's implementation.
+  | *** Please create an issue at https://github.com/GaloisInc/cryptol/issues
+  |
+  | %< --------------------------------------------------- 
+  |   Revision:  UNKNOWN
+  |   Branch:    UNKNOWN
+  |   Location:  [Reference Evaluator]literal
+  |   Message:   TCon (TC TCBit) [] cannot represent literals
+  | CallStack (from HasCallStack):
+  |   panic, called at src/Cryptol/Utils/Panic.hs:21:9 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Utils.Panic
+  |   panic, called at src/Cryptol/Eval/Reference.lhs:1960:19 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.Eval.Reference
+  | %< --------------------------------------------------- 
+
+HasCallStack backtrace:
+  bracket, called at src/Cryptol/REPL/Monad.hs:293:3 in cryptol-3.5.0-433db167a7aa5da71578e221c6bf9e4cfeb92942f84aab19ba6c3f9dd0e68e91:Cryptol.REPL.Monad
+decaps_ss_expected = 156533536C8435F82CC36FC1EF9528DEDC49223DDA0091617DC1ACAF6058D1CA
