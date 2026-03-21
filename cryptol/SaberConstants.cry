@@ -11,11 +11,10 @@ type mu = 8
 type seedBytes        = 32
 type noiseSeedBytes   = 32
 type keyBytes         = 32
-type hashBytes        = 32
+type hashBytesLen     = 32
 
 type indcpaPublicKeyBytes = 992
 type indcpaSecretKeyBytes = 1248
 type publicKeyBytes       = 992
 type secretKeyBytes       = 2304
 type bytesCCADec          = 1088
-type indcpaBytes          = 1088   // Byte length of the PKE ciphertext
