@@ -1,20 +1,63 @@
 module SaberConstants where
 
 // Core parameters (type-level constants)
-type l  = 3
-type eq = 13
-type ep = 10
-type et = 4
-type mu = 8
+// =======================================
+type N   = 256  // polynomial degree, fixed for all variants
+type l   = 3    // LightSaber=2; Saber=3; FireSaber=4
+type eq  = 13
+type ep  = 10
+type et  = 4    // LightSaber=3; Saber=4; FireSaber=6
+type mu  = 8    // LightSaber=10; Saber=8; FireSaber=6
 
-// Byte sizes
+
+
+// Fixed byte-length constants
+// ===========================
 type seedBytes        = 32
 type noiseSeedBytes   = 32
 type keyBytes         = 32
-type hashBytesLen     = 32
+type hashBytes        = 32
 
-type indcpaPublicKeyBytes = 992
-type indcpaSecretKeyBytes = 1248
-type publicKeyBytes       = 992
-type secretKeyBytes       = 2304
-type bytesCCADec          = 1088
+
+
+// Derived sizes (can be computed from core paramters, per Section 8.1 of SABER specification)
+// ==========================================================================================
+
+// Public key = seedA (seedBytes) + packed bp vector (l polynomials, ep bits per coefficient)
+type indcpaPublicKeyBytes  = seedBytes + (l * N * ep) / 8
+
+// Secret key (CPA) = packed s vector (l polynomials at eq bits each)
+type indcpaSecretKeyBytes  = (l * N * eq) / 8
+
+// KEM public key = CPA public key
+type publicKeyBytes        = indcpaPublicKeyBytes
+
+// KEM secret key = z + pkh + pk + sk_cpa
+type secretKeyBytes        = keyBytes + hashBytes + publicKeyBytes + indcpaSecretKeyBytes
+
+// Ciphertext = packed cm (1 polynomial at et bits) + packed b' vector (l polys at ep bits)
+type bytesCCADec           = (N * et) / 8 + (l * N * ep) / 8
+
+
+
+// Sanity check properties (for Saber-level security)
+// ==================================================
+
+// Some core param size checks
+property check_eq  = `eq == (13 : Integer)
+property check_ep  = `ep == (10 : Integer)
+property check_et  = `et == (4  : Integer)
+
+// Derived size checks
+property check_indcpaPublicKeyBytes  = `indcpaPublicKeyBytes  == (992  : Integer)
+property check_indcpaSecretKeyBytes  = `indcpaSecretKeyBytes  == (1248 : Integer)
+property check_publicKeyBytes        = `publicKeyBytes        == (992  : Integer)
+property check_secretKeyBytes        = `secretKeyBytes        == (2304 : Integer)
+property check_bytesCCADec           = `bytesCCADec           == (1088 : Integer)
+
+property check_all_derived_sizes  = 
+    check_indcpaPublicKeyBytes   /\
+    check_indcpaSecretKeyBytes   /\
+    check_publicKeyBytes         /\
+    check_secretKeyBytes         /\
+    check_bytesCCADec          

@@ -1,7 +1,7 @@
 module SaberHelpers where
 import SaberTypes
 import SaberConstants
-import SHAKE128
+//import SHAKE128
 
 // ==========================================================================
 h1 = ConstPoly 2 ^^ (`eq - `ep - 1)

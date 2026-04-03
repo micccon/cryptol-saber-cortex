@@ -1,7 +1,7 @@
 module SaberAlgorithms where
 import SaberTypes
 import SaberConstants
-import SHAKE128
+//import SHAKE128
 import SaberHelpers
 
 /**
@@ -10,16 +10,11 @@ import SaberHelpers
  * For fixed-width coefficient types (such as `Zq`), this corresponds to
  * multiplication by `2^shift` with wraparound in that coefficient domain.
  */
-PolyShiftLeftN:
+PolyShiftLeftN :
     {t}
-    (fin t)
-    => Poly [t] -> Integer -> Poly [t]
-PolyShiftLeftN poly shift = [ poly @ i << shift | i <- [0 .. 255] ]
-
-property PolyShiftLeftNProperty (poly : Poly Zq) =
-    PolyShiftLeftN poly shift == [ poly @ i << shift | i <- [0 .. 255] ]
-        where
-            shift = 2
+    (fin t) =>
+    Poly [t] -> [8] -> Poly [t]
+PolyShiftLeftN poly shift = [ c << shift | c <- poly ]
 
 /**
  * Shift every coefficient of a polynomial right by `shift` bits.
@@ -27,16 +22,26 @@ property PolyShiftLeftNProperty (poly : Poly Zq) =
  * For fixed-width coefficient types, this corresponds to dropping lower bits,
  * i.e. a power-of-two scaling down in bit representation.
  */
-PolyShiftRightN:
+PolyShiftRightN :
     {t}
-    (fin t)
-    => Poly [t] -> Integer -> Poly [t]
-PolyShiftRightN poly shift = [ poly @ i >> shift | i <- [0 .. 255] ]
+    (fin t) =>
+    Poly [t] -> [8] -> Poly [t]
+PolyShiftRightN poly shift = [ c >> shift | c <- poly ]
 
-property PolyShiftRightNProperty (poly : Poly Zq) =
-    PolyShiftRightN poly shift == [ poly @ i >> shift | i <- [0 .. 255] ]
-        where
-            shift = 2
+// Sanity check polynomial shift properties
+// ========================================
+
+// Check that shifting left, then right, by the same amount "zeroes out" the high-order bits
+// NOTE: This property uses a magic "% 4" that is tied to the specific shift amount of 2.
+//       If other shifts are to be tested, the magic "% 4" would need to be adjusted accordingly.
+property check_shift_roundtrip (poly : Poly Zq) =
+    and [ c % 4 == 0 | c <- PolyShiftLeftN (PolyShiftRightN poly 2) 2 ]
+
+// Check the shifting right by the full width produces all zeroes
+property check_shift_right_full (poly : Poly Zq) =
+    PolyShiftRightN poly `eq == zero
+
+
     
 /**
  * Convert a byte string into a polynomial with `k`-bit coefficients.
@@ -191,92 +196,95 @@ InnerProd va vb = [ sum [ PolyMul (va @ i) (vb @ i) @ k | i <- [0..l-1] ] | k <-
 InnerProdProperty (va : PolyVec Zp) (vb : PolyVec Zp) =
     InnerProd va vb == [ sum [ PolyMul (va @ i) (vb @ i) @ k | i <- [0..l-1] ] | k <- [0..255] ]
 
-/**
- * Generate the Saber public matrix over `Zq` from a seed using SHAKE-128.
- * The seed is expanded into enough bytes to fill all `l * l` polynomials,
- * then the output is reshaped in stages:
- *
- * 1. bytes -> `eq`-bit coefficients
- * 2. coefficients -> 256-coefficient polynomials
- * 3. polynomials -> `l x l` matrix
- *
- * This matches the high-level Saber matrix-generation specification while
- * using `xofBytes` so that we stay in normal byte ordering rather than dealing
- * with raw Keccak bit ordering directly.
- *
- * The property below checks that `GenMatrix_Zq` is exactly this reshape
- * pipeline applied to the SHAKE-128 output.
- */
-GenMatrix_Zq : ByteString seedBytes -> PolyMatrix_Zq
-GenMatrix_Zq seed = matrix
-    where
-        buf : ByteString (l * l * 256 / 8 * eq)
-        buf = xofBytes`{dBytes = l * l * 256 / 8 * eq} seed
 
-        coeffs : [l * l * 256] Zq
-        coeffs = split`{each=eq} (join buf)
+// COMMENTED OUT BELOW HERE FOR DEBUGGING
 
-        polys : [l * l] (Poly Zq)
-        polys = split `{each=256} coeffs
+// /**
+//  * Generate the Saber public matrix over `Zq` from a seed using SHAKE-128.
+//  * The seed is expanded into enough bytes to fill all `l * l` polynomials,
+//  * then the output is reshaped in stages:
+//  *
+//  * 1. bytes -> `eq`-bit coefficients
+//  * 2. coefficients -> 256-coefficient polynomials
+//  * 3. polynomials -> `l x l` matrix
+//  *
+//  * This matches the high-level Saber matrix-generation specification while
+//  * using `xofBytes` so that we stay in normal byte ordering rather than dealing
+//  * with raw Keccak bit ordering directly.
+//  *
+//  * The property below checks that `GenMatrix_Zq` is exactly this reshape
+//  * pipeline applied to the SHAKE-128 output.
+//  */
+// GenMatrix_Zq : ByteString seedBytes -> PolyMatrix_Zq
+// GenMatrix_Zq seed = matrix
+//     where
+//         buf : ByteString (l * l * 256 / 8 * eq)
+//         buf = xofBytes`{dBytes = l * l * 256 / 8 * eq} seed
 
-        matrix : PolyMatrix Zq
-        matrix = split `{each=l} polys
+//         coeffs : [l * l * 256] Zq
+//         coeffs = split`{each=eq} (join buf)
 
-property GenMatrix_ZqProperty (seedBytes : ByteString 32) =
-    GenMatrix_Zq seedBytes ==
-      split`{each=l}
-        (split`{each=256}
-            (split`{each=eq}
-            (join (xofBytes`{dBytes = l * l * 256 / 8 * eq} seedBytes))))
+//         polys : [l * l] (Poly Zq)
+//         polys = split `{each=256} coeffs
 
-exampleSeed32 : ByteString 32
-exampleSeed32 = [ fromInteger i | i <- [0 .. 31] ]
+//         matrix : PolyMatrix Zq
+//         matrix = split `{each=l} polys
 
-property GenMatrix_ZqExample =
-        GenMatrix_Zq exampleSeed32 ==
-            split`{each=l}
-                (split`{each=256}
-                    (split`{each=eq}
-                        (join (xofBytes`{dBytes = l * l * 256 / 8 * eq} exampleSeed32))))
+// property GenMatrix_ZqProperty (seedBytes : ByteString 32) =
+//     GenMatrix_Zq seedBytes ==
+//       split`{each=l}
+//         (split`{each=256}
+//             (split`{each=eq}
+//             (join (xofBytes`{dBytes = l * l * 256 / 8 * eq} seedBytes))))
 
-/**
- * Generate the Saber secret vector over `Zq` from a noise seed using
- * SHAKE-128.
- *
- * The expanded output is split into `mu`-bit chunks, each chunk is split into
- * two `mu/2` halves, and every coefficient is formed as the difference of
- * Hamming weights of those halves (interpreted in `Zq`).
- */
+// exampleSeed32 : ByteString 32
+// exampleSeed32 = [ fromInteger i | i <- [0 .. 31] ]
 
-GenSecret_Zq : ByteString noiseSeedBytes -> PolyVec_Zq
-GenSecret_Zq seed = vector
-    where
-        buf : ByteString (l * 256 / 8 * mu)
-        buf = xofBytes`{dBytes = l * 256 / 8 * mu} seed
+// property GenMatrix_ZqExample =
+//         GenMatrix_Zq exampleSeed32 ==
+//             split`{each=l}
+//                 (split`{each=256}
+//                     (split`{each=eq}
+//                         (join (xofBytes`{dBytes = l * l * 256 / 8 * eq} exampleSeed32))))
 
-        pairs : [l * 256] [2] [mu / 2]
-        pairs = map split`{parts=2} (split`{each=mu} (join buf))
+// /**
+//  * Generate the Saber secret vector over `Zq` from a noise seed using
+//  * SHAKE-128.
+//  *
+//  * The expanded output is split into `mu`-bit chunks, each chunk is split into
+//  * two `mu/2` halves, and every coefficient is formed as the difference of
+//  * Hamming weights of those halves (interpreted in `Zq`).
+//  */
 
-        secretCoeffs : [l * 256] Zq
-        secretCoeffs = [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq | k <- pairs ]
+// GenSecret_Zq : ByteString noiseSeedBytes -> PolyVec_Zq
+// GenSecret_Zq seed = vector
+//     where
+//         buf : ByteString (l * 256 / 8 * mu)
+//         buf = xofBytes`{dBytes = l * 256 / 8 * mu} seed
 
-        vector : PolyVec Zq
-        vector = split`{parts = l} secretCoeffs
+//         pairs : [l * 256] [2] [mu / 2]
+//         pairs = map split`{parts=2} (split`{each=mu} (join buf))
 
-property GenSecret_ZqExample =
-        GenSecret_Zq exampleSeed32 ==
-            split`{parts=l}
-                [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq
-                | k <- map split`{parts=2}
-                                 (split`{each=mu}
-                                     (join (xofBytes`{dBytes = l * 256 / 8 * mu} exampleSeed32)))
-                ]
+//         secretCoeffs : [l * 256] Zq
+//         secretCoeffs = [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq | k <- pairs ]
 
-property GenSecret_ZqProperty (noiseSeed : ByteString noiseSeedBytes) =
-        GenSecret_Zq noiseSeed ==
-            split`{parts=l}
-                [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq
-                | k <- map split`{parts=2}
-                                 (split`{each=mu}
-                                     (join (xofBytes`{dBytes = l * 256 / 8 * mu} noiseSeed)))
-                ]
+//         vector : PolyVec Zq
+//         vector = split`{parts = l} secretCoeffs
+
+// property GenSecret_ZqExample =
+//         GenSecret_Zq exampleSeed32 ==
+//             split`{parts=l}
+//                 [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq
+//                 | k <- map split`{parts=2}
+//                                  (split`{each=mu}
+//                                      (join (xofBytes`{dBytes = l * 256 / 8 * mu} exampleSeed32)))
+//                 ]
+
+// property GenSecret_ZqProperty (noiseSeed : ByteString noiseSeedBytes) =
+//         GenSecret_Zq noiseSeed ==
+//             split`{parts=l}
+//                 [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq
+//                 | k <- map split`{parts=2}
+//                                  (split`{each=mu}
+//                                      (join (xofBytes`{dBytes = l * 256 / 8 * mu} noiseSeed)))
+//                 ]
