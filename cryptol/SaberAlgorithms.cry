@@ -31,7 +31,7 @@ PolyShiftRightN poly shift = [ c >> shift | c <- poly ]
 // Sanity check polynomial shift properties
 // ========================================
 
-// Check that shifting left, then right, by the same amount "zeroes out" the high-order bits
+// Check that shifting right, then left, by the same amount "zeroes out" the low-order bits
 // NOTE: This property uses a magic "% 4" that is tied to the specific shift amount of 2.
 //       If other shifts are to be tested, the magic "% 4" would need to be adjusted accordingly.
 property check_shift_roundtrip (poly : Poly Zq) =

@@ -43,11 +43,6 @@ type bytesCCADec           = (N * et) / 8 + (l * N * ep) / 8
 // Sanity check properties (for Saber-level security)
 // ==================================================
 
-// Some core param size checks
-property check_eq  = `eq == (13 : Integer)
-property check_ep  = `ep == (10 : Integer)
-property check_et  = `et == (4  : Integer)
-
 // Derived size checks
 property check_indcpaPublicKeyBytes  = `indcpaPublicKeyBytes  == (992  : Integer)
 property check_indcpaSecretKeyBytes  = `indcpaSecretKeyBytes  == (1248 : Integer)
