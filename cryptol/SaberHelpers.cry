@@ -3,16 +3,15 @@ import SaberTypes
 import SaberConstants
 //import SHAKE128
 
-// ==========================================================================
+//===========================================================================
 h1 = ConstPoly 2 ^^ (`eq - `ep - 1)
 h2 = ConstPoly (2 ^^ (`ep - 2) - 2 ^^ (`ep - `et - 1) + 2 ^^ (`eq - `ep - 1))
 h = ConstPolyVec 2 ^^ (`eq - `ep - 1)
 
-//==========================================================================
+//===HAMMING WEIGHT=========================================================
 /**
  * Compute the Hamming weight of a bit string by counting how many bits are set
- * to `True`. This is a small utility helper that is often useful when working
- * with noise sampling or bit-oriented correctness checks.
+ * to `True`. 
  *
  * The property below simply checks that the helper agrees with its defining
  * list-comprehension form on a concrete 256-bit input.
@@ -23,17 +22,24 @@ HammingWeight:
     => BitString n -> Integer
 HammingWeight bitString = sum [ if bit then 1 else 0 | bit <- bitString ]
 
-property HammingWeightProperty (bitString : BitString 256) =
-    HammingWeight bitString == sum [ if bit then 1 else 0 | bit <- bitString ]
+// Sanity check Hamming Weight properties
+// ======================================
+// Zero input has weight zero
+property check_HammingWeight_zero =
+    HammingWeight (0 : BitString 8) == 0
+// All-ones input has weight equal to the length
+property check_HammingWeight_ones =
+    HammingWeight (0xFF : BitString 8) == 8
+// Weight is always non-negative
+property check_HammingWeight_nonneg (bs : BitString 8) =
+    HammingWeight bs >= 0
+// Weight never exceeds the length
+property check_HammingWeight_bounded (bs : BitString 8) =
+    HammingWeight bs <= 8
 
-HammingWeight4 : BitString 4 -> Integer
-HammingWeight4 bits =
-    (if bits @ 0 then 1 else 0) +
-    (if bits @ 1 then 1 else 0) +
-    (if bits @ 2 then 1 else 0) +
-    (if bits @ 3 then 1 else 0)
 
-//==========================================================================
+
+//===RANDBYTES FUNCTIONS=====================================================
 /**
  * Produce a deterministic byte string for testing.
  *
@@ -50,7 +56,9 @@ RandBytes n=
 property RandBytesProperty =
     RandBytes 32 == [if num % 2 == 0 then 7 else 6 | num <- [1 .. 32]]
 
-//==========================================================================
+
+
+//===VerifyBS FUNCTION=======================================================
 /**
  * Compare two byte strings for exact equality. This helper is intentionally
  * simple: it just exposes byte-string comparison through a named function so
@@ -67,6 +75,8 @@ VerifyBS bs1 bs2 = bs1 == bs2
 
 VerifyBSProperty (bs1 : ByteString 32) (bs2 : ByteString 32) =
     VerifyBS bs1 bs2 == (bs1 == bs2)
+
+
 
 //==========================================================================
 /**
