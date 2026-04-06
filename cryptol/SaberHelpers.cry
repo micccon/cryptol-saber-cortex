@@ -1,12 +1,16 @@
 module SaberHelpers where
 import SaberTypes
 import SaberConstants
-//import SHAKE128
+import Primitive::Keyless::Hash::SHA3::Instantiations::SHAKE128 as SHAKE128
 
-//===========================================================================
+h1 : Poly Zq
 h1 = ConstPoly 2 ^^ (`eq - `ep - 1)
+
+h2 : Poly Zq
 h2 = ConstPoly (2 ^^ (`ep - 2) - 2 ^^ (`ep - `et - 1) + 2 ^^ (`eq - `ep - 1))
-h = ConstPolyVec 2 ^^ (`eq - `ep - 1)
+
+h  : PolyVec Zq
+h  = ConstPolyVec 2 ^^ (`eq - `ep - 1)
 
 //===HAMMING WEIGHT=========================================================
 /**
@@ -18,7 +22,7 @@ h = ConstPolyVec 2 ^^ (`eq - `ep - 1)
  */
 HammingWeight:
     {n}
-    (fin n)
+    (fin n, n >= 1)
     => BitString n -> Integer
 HammingWeight bitString = sum [ if bit then 1 else 0 | bit <- bitString ]
 
@@ -39,7 +43,7 @@ property check_HammingWeight_bounded (bs : BitString 8) =
 
 
 
-//===RANDBYTES FUNCTIONS=====================================================
+//===RANDBYTES FUNCTION======================================================
 /**
  * Produce a deterministic byte string for testing.
  *
@@ -53,7 +57,7 @@ RandBytes:
 RandBytes n=
     [if num % 2 == 0 then 7 else 6 | num <- [1 .. n]]
 
-property RandBytesProperty =
+property check_RandBytes =
     RandBytes 32 == [if num % 2 == 0 then 7 else 6 | num <- [1 .. 32]]
 
 
@@ -63,108 +67,93 @@ property RandBytesProperty =
  * Compare two byte strings for exact equality. This helper is intentionally
  * simple: it just exposes byte-string comparison through a named function so
  * it can be reused in the higher-level Saber code.
- *
- * The accompanying property checks that the helper is equivalent to Cryptol's
- * built-in equality on a concrete 32-byte example size.
  */
 VerifyBS :
     {n}
-    (fin n)
+    (fin n, n >= 1)
     => ByteString n -> ByteString n -> Bit
-VerifyBS bs1 bs2 = bs1 == bs2
+VerifyBS bs1 bs2 = (bs1 == bs2)
 
-VerifyBSProperty (bs1 : ByteString 32) (bs2 : ByteString 32) =
+// Trivial sanity check property
+property check_VerifyBS (bs1 : ByteString 32) (bs2 : ByteString 32) =
     VerifyBS bs1 bs2 == (bs1 == bs2)
 
 
 
-//==========================================================================
+//===CONST POLY, VEC, MATRIX FUNCTIONS======================================
 /**
- * Construct a polynomial whose 256 coefficients are all the same value.
+ * Create polynomials, vectors of polynomials, and/or matrices of polynomials
+ * where all coefficients are the same. Used in several contexts throughout the
+ * SABER specification.
  */
 ConstPoly :
-    {t}
-    t -> Poly t
+    {k}
+    k -> Poly k
 ConstPoly elementVal = [ elementVal | _ <- [0 .. 255] ]
 
-//==========================================================================
-/**
- * Construct a vector of `l` polynomials whose coefficients are all the same
- * value.
- */
 ConstPolyVec :
-    {t}
-    t -> PolyVec t
+    {k}
+    k -> PolyVec k
 ConstPolyVec elementVal = [ ConstPoly elementVal | _ <- [0 .. l - 1] ]
 
-//==========================================================================
-/**
- * Construct an `l x l` matrix of polynomials whose coefficients are all the
- * same value.
- */
 ConstPolyMatrix :
-    {t}
-    t -> PolyMatrix t
+    {k}
+    k -> PolyMatrix k
 ConstPolyMatrix elementVal = [ ConstPolyVec elementVal | _ <- [0 .. l - 1] ]
 
+
+//===POLY ROUNDING FUNCTIONS================================================
 /**
- * Round a polynomial from Zq (EQ-bit coefficients) to Zp (EP-bit coefficients).
- * Each coefficient is effectively divided by 2^(EQ - EP) with truncation.
+ * Round a polynomial from Zq to Zp by dropping the (eq - ep) least
+ * significant bits.
  */
 RoundPoly_ZqToZp : Poly Zq -> Poly Zp
-RoundPoly_ZqToZp poly =
-    [ drop`{eq - ep} ((poly @ i) >> (`eq - `ep)) | i <- [0 .. 255] ]
+RoundPoly_ZqToZp poly = [ drop`{eq - ep} coeff | coeff <- poly ]
+
+RoundPolyVec_ZqToZp : PolyVec Zq -> PolyVec Zp
+RoundPolyVec_ZqToZp vec = [ RoundPoly_ZqToZp p | p <- vec ]
 
 /**
- * Lift a polynomial from `Zt` to `Zp` by zero-extending each coefficient.
- *
- * This helper performs only representation conversion; any decryption shift
- * (`SHIFTLEFT(..., EP - ET)`) should be done separately at the call site.
+ * Lift a polynomial from Zt to Zp by zero-extending each coefficient.
  */
 RoundPoly_ZtToZp : Poly Zt -> Poly Zp
-RoundPoly_ZtToZp cm =
-    [ (zext (cm @ i) : Zp) | i <- [0 .. 255] ]
+RoundPoly_ZtToZp poly = [ zext coeff | coeff <- poly ]
 
-property RoundPoly_ZtToZpProperty (cm : Poly Zt) =
-    RoundPoly_ZtToZp cm ==
-        [ (zext (cm @ i) : Zp) | i <- [0 .. 255] ]
+RoundPolyVec_ZtToZp : PolyVec Zt -> PolyVec Zp
+RoundPolyVec_ZtToZp vec = [ RoundPoly_ZtToZp p | p <- vec ]
 
 /**
- * Round a polynomial from Zp (EP-bit coefficients) to Zt (ET-bit coefficients).
- * Each coefficient is effectively divided by 2^(EP - ET) with truncation.
+ * Round a polynomial from Zp to Zt by dropping the (ep - et) least
+ * significant bits.
  */
 RoundPoly_ZpToZt : Poly Zp -> Poly Zt
-RoundPoly_ZpToZt polyZp =
-    [ drop`{ep - et} (polyZp @ i) >> (`ep - `et) | i <- [0 .. 255] ]
+RoundPoly_ZpToZt poly = [ drop`{ep - et} coeff | coeff <- poly ]
 
-property RoundPoly_ZpToZtProperty (polyZp : Poly Zp) =
-    RoundPoly_ZpToZt polyZp ==
-      [ drop`{ep - et} (polyZp @ i) >> (`ep - `et) | i <- [0 .. 255] ]
+RoundPolyVec_ZpToZt : PolyVec Zp -> PolyVec Zt
+RoundPolyVec_ZpToZt vec = [ RoundPoly_ZpToZt p | p <- vec ]
 
 /**
- * Round a polynomial from `Zp` (EP-bit coefficients) to `Z2` (1-bit coefficients).
- * Each coefficient is effectively divided by 2^(EP - 1) with truncation.
+ * Round a polynomial from Zp to Z2 by dropping the (ep - 1) least
+ * significant bits.
  */
 RoundPoly_ZpToZ2 : Poly Zp -> Poly Z2
-RoundPoly_ZpToZ2 polyZp =
-    [ drop`{ep - 1} ((polyZp @ i) >> (`ep - 1)) | i <- [0 .. 255] ]
+RoundPoly_ZpToZ2 poly = [ drop`{ep - 1} coeff | coeff <- poly ]
 
-property RoundPoly_ZpToZ2Property (polyZp : Poly Zp) =
-    RoundPoly_ZpToZ2 polyZp ==
-      [ drop`{ep - 1} ((polyZp @ i) >> (`ep - 1)) | i <- [0 .. 255] ]
+RoundPolyVec_ZpToZ2 : PolyVec Zp -> PolyVec Z2
+RoundPolyVec_ZpToZ2 vec = [ RoundPoly_ZpToZ2 p | p <- vec ]
 
 /**
- * Lift a polynomial from `Z2` (1-bit coefficients) to `Zp` (EP-bit coefficients).
- * Each 0/1 coefficient becomes a full `EP`-bit coefficient in Zp.
+ * Lift a polynomial from Z2 to Zp by zero-extending each coefficient.
  */
 RoundPoly_Z2ToZp : Poly Z2 -> Poly Zp
-RoundPoly_Z2ToZp polyZ2 =
-    [ ((zero : [ep - 1]) # (polyZ2 @ i)) : [ep] | i <- [0 .. 255] ]
+RoundPoly_Z2ToZp poly = [ zext coeff | coeff <- poly ]
 
-property RoundPoly_Z2ToZpProperty (polyZ2 : Poly Z2) =
-    RoundPoly_Z2ToZp polyZ2 ==
-      [ ((zero : [ep - 1]) # (polyZ2 @ i)) : [ep] | i <- [0 .. 255] ]
+RoundPolyVec_Z2ToZp : PolyVec Z2 -> PolyVec Zp
+RoundPolyVec_Z2ToZp vec = [ RoundPoly_Z2ToZp p | p <- vec ]
 
+
+
+//===SPLIT PUBLIC KEY=======================================================
 /**
  * Function to split a PKE public key into its two constituent parts:
  * 
