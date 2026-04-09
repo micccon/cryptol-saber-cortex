@@ -143,15 +143,21 @@ PolyMul :
     {k}
     (fin k, k >= 1)
     => Poly [k] -> Poly [k] -> Poly [k]
-PolyMul a b =
-  [ sum [ contrib i c | i <- [0 .. 255] ] | c <- [0 .. 255] ]
-  where
-    contrib i c =
-      if i <= c
-      then (a @ i) * (b @ j)
-      else negate ((a @ i) * (b @ j))
-      where
-        j = (c - i) % 256
+// PolyMul a b = 
+// Old, naive implementation (was too slow for actual testing purposes and concrete evaluation)
+//   [ sum [ contrib i c | i <- [0 .. 255] ] | c <- [0 .. 255] ]
+//     where
+//       contrib i c =
+//         if i <= c
+//         then (a @ i) * (b @ j)
+//         else negate ((a @ i) * (b @ j))
+//         where
+//           j = (c - i) % 256
+PolyMul a b = [ sum [ if i <= c
+                      then (a @ i) * (b @ ((c - i) % 256))
+                      else negate ((a @ i) * (b @ ((c - i) % 256)))
+                    | i <- [0 .. 255] ]
+            | c <- [0 .. 255] ]
 
 // Sanity check negacyclic convolution properties
 // ==============================================
@@ -178,7 +184,9 @@ MatrixVectorMul :
     (fin k, k >= 1)
     => PolyMatrix [k] -> PolyVec [k] -> PolyVec [k]
 MatrixVectorMul matrix vector =
-    [ sum [ PolyMul (matrix @ i @ j) (vector @ j) | j <- [0 .. l-1] ] | i <- [0 .. l-1] ] 
+    // Old, naive, schoolbook method
+    // [ sum [ PolyMul (matrix @ i @ j) (vector @ j) | j <- [0 .. l-1] ] | i <- [0 .. l-1] ] 
+    [ sum (zipWith PolyMul row vector) | row <- matrix ]
 
 // Sanity check matrix-vector multiplication properties
 // ====================================================

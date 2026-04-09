@@ -1,0 +1,43 @@
+module SaberPKETests where
+
+/**
+ * This is a test module for our Saber PKE implementation. It checks roundtrip correctness for
+ * a handful of fixed-length messages. 
+ *
+ * Please note that these tests will take a while to run (upwards of 10 minutes on an Apple Silicon M1 Pro), 
+ * which is due to the current `MatrixVectorMul` and `PolyMul` helper functions. We are currently exploring 
+ * potential ways to optimize these functions for, if nothing else, faster testing.
+ */
+
+import SaberPKE
+import SaberConstants
+import SaberTypes
+import SaberAlgorithms
+import SaberHelpers
+
+(testPK, testSK) = PKE_KeyGenDet (RandBytes 0) (RandBytes 1)
+testEncSeed      : ByteString noiseSeedBytes
+testEncSeed      = RandBytes 2
+
+m_zeros          : ByteString (N / 8)
+m_zeros          = zero
+
+m_ones           : ByteString (N / 8)
+m_ones           = ~zero
+
+m_alternating    : ByteString (N / 8)
+m_alternating    = [if i % 2 == 0 then 0xAA else 0x55 | i <- [0 .. 31]]
+
+m_sequential     : ByteString (N / 8)
+m_sequential     = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                    0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
+                    0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+                    0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20]
+
+roundtrip : ByteString (N / 8) -> Bool
+roundtrip m = PKE_Decrypt (PKE_EncDet m testEncSeed testPK) testSK == m
+
+property check_roundtrip_zeros       = roundtrip m_zeros
+property check_roundtrip_ones        = roundtrip m_ones
+property check_roundtrip_alternating = roundtrip m_alternating
+property check_roundtrip_sequential  = roundtrip m_sequential

@@ -17,20 +17,20 @@ PKE_KeyGenDet :
     (ByteString indcpaPublicKeyBytes, ByteString indcpaSecretKeyBytes)
 PKE_KeyGenDet seedAInput seedS = (publicKey, secretKey)
   where
-    seedA : ByteString seedBytes
-    seedA = SHAKE128::xofBytes`{dBytes = seedBytes} seedAInput
+    seedA     : ByteString seedBytes
+    seedA     = SHAKE128::xofBytes`{dBytes = seedBytes} seedAInput
 
-    _A : PolyMatrix_Zq
-    _A = GenMatrix_Zq seedA
+    _A        : PolyMatrix_Zq
+    _A        = GenMatrix_Zq seedA
 
-    s : PolyVec_Zq
-    s = GenSecret_Zq seedS
+    s         : PolyVec_Zq
+    s         = GenSecret_Zq seedS
 
-    b : PolyVec_Zq
-    b = MatrixVectorMul (transpose _A) s + h
+    b         : PolyVec_Zq
+    b         = MatrixVectorMul (transpose _A) s + h
 
-    bp : PolyVec_Zp
-    bp = RoundPolyVec_ZqToZp b
+    bp        : PolyVec_Zp
+    bp        = RoundPolyVec_ZqToZp b
 
     secretKey : ByteString indcpaSecretKeyBytes
     secretKey = PolyVec2BS s
@@ -46,10 +46,10 @@ PKE_KeyGenDet seedAInput seedS = (publicKey, secretKey)
 PKE_KeyGen : (ByteString indcpaPublicKeyBytes, ByteString indcpaSecretKeyBytes)
 PKE_KeyGen = PKE_KeyGenDet seedA seedS
   where
-    seedA : ByteString seedBytes
-    seedA = RandBytes 0
-    seedS : ByteString noiseSeedBytes
-    seedS = RandBytes 1
+    seedA     : ByteString seedBytes
+    seedA     = RandBytes 0
+    seedS     : ByteString noiseSeedBytes
+    seedS     = RandBytes 1
 
 // Sanity check PKE keygen properties
 // ==================================
@@ -70,7 +70,7 @@ property check_PKE_KeyGen_pk_contains_seedA =
         (pk, _) = PKE_KeyGen
 
 // NOTE: Use `:check` here instead of `:prove`, as proving this property is a tall ask
-//       for the Z3 solver. `:set tests=50` or `:set tests=100` should suffice.
+//       for the Z3 solver. `:set tests=25` or `:set tests=50` should suffice.
 property check_PKE_KeyGenDet_distinct
     (seed1 : ByteString seedBytes)
     (seed2 : ByteString seedBytes) =
@@ -79,81 +79,155 @@ property check_PKE_KeyGenDet_distinct
 
 
 
-// PKE_Decrypt : 
-//     ByteString bytesCCADec -> ByteString indcpaSecretKeyBytes -> ByteString 32
-// PKE_Decrypt ciphertext secretKey = plaintext
-//   where
-//     s = BS2PolyVec secretKey : PolyVec_Zq
+//===PKE DECRYPT============================================================
+/**
+ * PKE Decrypt function. Takes a ciphertext and secret key and returns the
+ * decrypted message. Matches Algorithm 19 in the spec.
+ */
+PKE_Decrypt : 
+    ByteString bytesCCADec -> 
+    ByteString indcpaSecretKeyBytes -> 
+    ByteString (N / 8)
+PKE_Decrypt ciphertext secretKey = plaintext
+  where
+    // Deserialize secret key
+    s         : PolyVec_Zq
+    s         = BS2PolyVec`{eq} secretKey
     
-//     cmBytes : ByteString (et * 256 / 8)
-//     cmBytes = take`{et * 256 / 8} ciphertext
-//     ctBytes : ByteString (l * ep * 256 / 8)
-//     ctBytes = drop`{et * 256 / 8} ciphertext
+    // Split ciphertext into cm bytes and b' bytes
+    cmBytes   : ByteString (et * N / 8)
+    cmBytes   = take`{et * N / 8} ciphertext
 
-//     cmT : Poly_Zt
-//     cmT = BS2Poly`{et} cmBytes : Poly_Zt
-//     cmP : Poly_Zp
-//     cmP = PolyShiftLeftN (RoundPoly_ZtToZp cmT) (`ep - `et)
+    ctBytes   : ByteString (l * ep * N / 8)
+    ctBytes   = drop`{et * N / 8} ciphertext
 
-//     bp : PolyVec_Zp
-//     bp = BS2PolyVec`{ep} ctBytes
-//     sp : PolyVec_Zp
-//     sp = [ RoundPoly_ZqToZp (s @ i) | i <- [0..l-1] ]
+    // Deserialize cm and lift from Zt to Zp, then shift left by (EP - ET)
+    cmT       : Poly_Zt
+    cmT       = BS2Poly`{et} cmBytes
 
-//     v : Poly_Zp
-//     v = InnerProd bp sp
+    cmP       : Poly_Zp
+    cmP       = PolyShiftLeftN (RoundPoly_ZtToZp cmT) (`ep - `et)
 
-//     shifted : Poly_Zp
-//     shifted = PolyShiftRightN (v - cmP + (h2 : Poly_Zp)) (`ep - 1)
+    // Deserialize b' and round s down to Zp
+    bp        : PolyVec_Zp
+    bp        = BS2PolyVec`{ep} ctBytes
 
-//     m' : Poly_Z2
-//     m' = RoundPoly_ZpToZ2 shifted
+    sp        : PolyVec_Zp
+    sp        = RoundPolyVec_ZqToZp s
 
-//     plaintext = Poly2BS`{1} m'
+    // Compute v = <b', s>
+    v         : Poly_Zp
+    v         = InnerProd bp sp
 
-// PKE_Enc : 
-//   ByteString (256/8) ->
-//   ByteString seedBytes ->
-//   ByteString indcpaPublicKeyBytes ->
-//   ByteString bytesCCADec
-// PKE_Enc m seedS publicKey = ciphertext
-//   where
-//     // Split public key into constituent parts
-//     (seedA, pkBytes) = SplitPublicKey publicKey
+    // Recover message polynomial and serialize
+    h2p       : Poly_Zp
+    h2p       = RoundPoly_ZqToZp h2
+    shifted   : Poly_Zp
+    shifted   = PolyShiftRightN (v - cmP + h2p) (`ep - 1)
 
-//     // Generate A from seedA, and secret vector s' from seedS
-//     _A = GenMatrix_Zq seedA : PolyMatrix_Zq
-//     s' = GenSecret_Zq seedS : PolyVec_Zq
+    m'        : Poly_Z2
+    m'        = [ drop`{ep - 1} c | c <- shifted ]
 
-//     // Compute b' = A * s' + h, then round
-//     b' = (MatrixVectorMul _A s') + h : PolyVec_Zq
-//     b'p = [ RoundPoly_ZqToZp (b' @ i) | i <- [0..l-1] ]
+    plaintext : ByteString (N / 8)
+    plaintext = Poly2BS m'
 
-//     // Decode the public key vector
-//     b = BS2PolyVec pkBytes : PolyVec_Zp
 
-//     // Compute the inner product v' (polynomial w/ coefficients in Zp)
-//     s'' = [ RoundPoly_ZqToZp (s' @ i) | i <- [0..l-1] ] : PolyVec_Zp
-//     v' = InnerProd b s'' : Poly_Zp
 
-//     // Convert message to polynomial & Lift to Zp and shift left by (EP - 1)
-//     mpZ2 = BS2Poly m : Poly_Z2
-//     mp = [ (RoundPoly_Z2ToZp (mpZ2) @ i) << (`ep - 1) | i <- [0..255] ] : Poly Zp 
+//===PKE ENCRYPT============================================================
+/**
+ * PKE Encrypt function where the seeds are provided, rather than generated 
+ * randomly as a part of the function. This is necessary for KAT testing and 
+ * evaluation.
+ */
+PKE_EncDet : 
+  ByteString (N / 8) ->
+  ByteString noiseSeedBytes ->
+  ByteString indcpaPublicKeyBytes ->
+  ByteString bytesCCADec
+PKE_EncDet m seedS publicKey = ct
+  where
+    // Split public key into seedA and packed b vector
+    seedA   : ByteString seedBytes
+    seedA   = take`{seedBytes} publicKey
 
-//     // Compute ciphertext polynomial component
-//     cm = RoundPoly_ZpToZt [ (v' @ i) - (mp @ i) + (h1 @ i) | i <- [0..255] ] : Poly Zt
+    pkBytes : ByteString (indcpaPublicKeyBytes - seedBytes)
+    pkBytes = drop`{seedBytes} publicKey
 
-//     // Concatenate cm and the rounded b' vector to form the final ciphertext
-//     ciphertext = (Poly2BS cm) # (PolyVec2BS b'p) : ByteString bytesCCADec
+    // Generate A from seedA, and secret vector s' from seedS
+    _A      : PolyMatrix_Zq
+    _A      = GenMatrix_Zq seedA
 
-// property PKE_EncDecRoundTrip
-//     (m : ByteString (256 / 8))
-//     (encSeed : ByteString seedBytes) =
-//     PKE_Decrypt (PKE_Enc m encSeed publicKey) secretKey == m
-//   where
-//     (publicKey, secretKey) = PKE_KeyGen
+    s'      : PolyVec_Zq
+    s'      = GenSecret_Zq seedS
 
-// property PKE_EncDecExample =
-//   PKE_EncDecRoundTrip
-//     ([0x00 | _ <- [0 .. 31]] : ByteString 32)
-//     ([0x01 | _ <- [0 .. 31]] : ByteString 32)
+    // Compute b' = A * s' + h, then round to Zp
+    b'      : PolyVec_Zq
+    b'      = MatrixVectorMul _A s' + h
+
+    b'p     : PolyVec_Zp
+    b'p     = RoundPolyVec_ZqToZp b'
+
+    // Decode the public key vector
+    b       : PolyVec_Zp
+    b       = BS2PolyVec`{ep} pkBytes
+
+    // Round s' to Zp and compute the inner product v'
+    s'p     : PolyVec_Zp
+    s'p     = RoundPolyVec_ZqToZp s'
+
+    v'      : Poly_Zp
+    v'      = InnerProd b s'p
+
+    // Convert message to Z2 polynomial, lift to Zp, and shift left by (EP - 1)
+    mp_Z2   : Poly_Z2
+    mp_Z2   = BS2Poly m
+
+    mp      : Poly_Zp
+    mp      = [ zext (mp_Z2 @ i) << (`ep - 1) | i <- [0 .. 255] ]
+
+    // Compute cm = round((v' - mp + h1) from Zp to Zt)
+    h1p     : Poly_Zp
+    h1p     = RoundPoly_ZqToZp h1
+
+    cm_zp   : Poly_Zp
+    cm_zp   = PolyShiftRightN [ (v' @ i) - (mp @ i) + (h1p @ i) 
+                               | i <- [0 .. 255] ] (`ep - `et)
+    cm      : Poly_Zt
+    cm      = [ drop`{ep - et} c | c <- cm_zp ]
+
+    // Ciphertext = packed cm || packed b'
+    ct      : ByteString bytesCCADec
+    ct      = Poly2BS cm # PolyVec2BS b'p
+
+/**
+ * PKE Encrypt function where the seeds are NOT provided. Rather, they are
+ * "randomly" produced via our lovely RandBytes function (just a bunch of
+ * continuous 676767's... lol. It's a funny number reference. Get it?)
+ */
+PKE_Enc :
+    ByteString (N / 8) ->
+    ByteString indcpaPublicKeyBytes ->
+    ByteString bytesCCADec
+PKE_Enc m publicKey = PKE_EncDet m (RandBytes 2) publicKey
+
+
+
+//===PKE ROUNDTRIP PROPERTIES===============================================
+/**
+ * Encrypting then decrypting should recover the original message.
+ * This is the core correctness property for the PKE scheme.
+ */
+property check_PKE_EncDet_Decrypt_roundtrip
+    (m       : ByteString (N / 8))
+    (encSeed : ByteString noiseSeedBytes) =
+    PKE_Decrypt (PKE_EncDet m encSeed publicKey) secretKey == m
+    where
+        (publicKey, secretKey) = PKE_KeyGen
+
+/**
+ * Roundtrip check on fixed example inputs.
+ */
+property check_PKE_roundtrip_example =
+    check_PKE_EncDet_Decrypt_roundtrip
+        (zero : ByteString (N / 8))
+        (zero : ByteString noiseSeedBytes)

@@ -1,0 +1,43 @@
+module SaberPKETests where
+
+/**
+ * This is a test module for our Saber KEM implementation. It checks roundtrip
+ * correctness for encapsulation and decapsulation using fixed seeds.
+ *
+ * Please note that these tests will take a while to run (upwards of 10 minutes on an Apple Silicon M1 Pro), 
+ * which is due to the current `MatrixVectorMul` and `PolyMul` helper functions. We are currently exploring 
+ * potential ways to optimize these functions for, if nothing else, faster testing.
+ */
+
+import SaberKEM
+import SaberPKE
+import SaberConstants
+import SaberTypes
+import SaberAlgorithms
+import SaberHelpers
+
+// Fixed test keys and seeds
+(testPK, testSK) = KEM_KeyGenDet (RandBytes 0) (RandBytes 1) (RandBytes 3)
+
+// Roundtrip helper: encapsulate with a given message seed, then decapsulate
+roundtrip : ByteString (N / 8) -> Bool
+roundtrip m =
+    KEM_Decaps ct testSK == ss_enc
+    where
+        (ct, ss_enc) = KEM_EncapsDet m testPK
+
+// Test with different message seeds
+property check_KEM_roundtrip_zeros =
+    roundtrip zero
+
+property check_KEM_roundtrip_ones =
+    roundtrip (~zero)
+
+property check_KEM_roundtrip_alternating =
+    roundtrip [if i % 2 == 0 then 0xAA else 0x55 | i <- [0 .. 31]]
+
+property check_KEM_roundtrip_sequential =
+    roundtrip [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+               0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
+               0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+               0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20]

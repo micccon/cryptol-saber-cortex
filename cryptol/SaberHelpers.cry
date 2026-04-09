@@ -4,13 +4,13 @@ import SaberConstants
 import Primitive::Keyless::Hash::SHA3::Instantiations::SHAKE128 as SHAKE128
 
 h1 : Poly Zq
-h1 = ConstPoly 2 ^^ (`eq - `ep - 1)
+h1 = ConstPoly (2 ^^ (`eq - `ep - 1))
 
 h2 : Poly Zq
 h2 = ConstPoly (2 ^^ (`ep - 2) - 2 ^^ (`ep - `et - 1) + 2 ^^ (`eq - `ep - 1))
 
-h  : PolyVec Zq
-h  = ConstPolyVec 2 ^^ (`eq - `ep - 1)
+h : PolyVec Zq
+h = ConstPolyVec (2 ^^ (`eq - `ep - 1))
 
 //===HAMMING WEIGHT=========================================================
 /**
@@ -102,10 +102,10 @@ ConstPolyMatrix :
 ConstPolyMatrix elementVal = [ ConstPolyVec elementVal | _ <- [0 .. l - 1] ]
 
 
+
 //===POLY ROUNDING FUNCTIONS================================================
 /**
- * Round a polynomial from Zq to Zp by dropping the (eq - ep) least
- * significant bits.
+ * Round a polynomial from Zq to Zp by keeping the least significant ep bits.
  */
 RoundPoly_ZqToZp : Poly Zq -> Poly Zp
 RoundPoly_ZqToZp poly = [ drop`{eq - ep} coeff | coeff <- poly ]
@@ -123,8 +123,7 @@ RoundPolyVec_ZtToZp : PolyVec Zt -> PolyVec Zp
 RoundPolyVec_ZtToZp vec = [ RoundPoly_ZtToZp p | p <- vec ]
 
 /**
- * Round a polynomial from Zp to Zt by dropping the (ep - et) least
- * significant bits.
+ * Round a polynomial from Zp to Zt keeping the least significant et bits.
  */
 RoundPoly_ZpToZt : Poly Zp -> Poly Zt
 RoundPoly_ZpToZt poly = [ drop`{ep - et} coeff | coeff <- poly ]
@@ -133,8 +132,7 @@ RoundPolyVec_ZpToZt : PolyVec Zp -> PolyVec Zt
 RoundPolyVec_ZpToZt vec = [ RoundPoly_ZpToZt p | p <- vec ]
 
 /**
- * Round a polynomial from Zp to Z2 by dropping the (ep - 1) least
- * significant bits.
+ * Round a polynomial from Zp to Z2 by keeping only the least significant bit.
  */
 RoundPoly_ZpToZ2 : Poly Zp -> Poly Z2
 RoundPoly_ZpToZ2 poly = [ drop`{ep - 1} coeff | coeff <- poly ]
@@ -150,20 +148,3 @@ RoundPoly_Z2ToZp poly = [ zext coeff | coeff <- poly ]
 
 RoundPolyVec_Z2ToZp : PolyVec Z2 -> PolyVec Zp
 RoundPolyVec_Z2ToZp vec = [ RoundPoly_Z2ToZp p | p <- vec ]
-
-
-
-//===SPLIT PUBLIC KEY=======================================================
-/**
- * Function to split a PKE public key into its two constituent parts:
- * 
- * 1) seedA  [seed to generate matrix A]
- * 2) pk     [public key]
- */
-SplitPublicKey : 
-  ByteString indcpaPublicKeyBytes ->
-  (ByteString seedBytes, ByteString (indcpaPublicKeyBytes - seedBytes)) 
-SplitPublicKey publicKey = (seedA, pkBytes)
-  where
-    pkBytes = take`{indcpaPublicKeyBytes - seedBytes} publicKey
-    seedA   = drop`{indcpaPublicKeyBytes - seedBytes} publicKey
