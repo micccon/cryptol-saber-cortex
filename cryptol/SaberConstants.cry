@@ -40,10 +40,17 @@ type bytesCCADec           = (N * et) / 8 + (l * N * ep) / 8
 
 
 
-// Sanity check properties (for Saber-level security)
-// ==================================================
+// Sanity check properties
+// =======================
 
-// Derived size checks
+// (for LightSaber-level security)
+// property check_indcpaPublicKeyBytes  = `indcpaPublicKeyBytes  == (672  : Integer)
+// property check_indcpaSecretKeyBytes  = `indcpaSecretKeyBytes  == (832  : Integer)
+// property check_publicKeyBytes        = `publicKeyBytes        == (672  : Integer)
+// property check_secretKeyBytes        = `secretKeyBytes        == (1568 : Integer)
+// property check_bytesCCADec           = `bytesCCADec           == (736  : Integer)
+
+// (for Saber-level security)
 property check_indcpaPublicKeyBytes  = `indcpaPublicKeyBytes  == (992  : Integer)
 property check_indcpaSecretKeyBytes  = `indcpaSecretKeyBytes  == (1248 : Integer)
 property check_publicKeyBytes        = `publicKeyBytes        == (992  : Integer)

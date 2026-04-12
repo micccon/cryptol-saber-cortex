@@ -120,12 +120,12 @@ KEM_Decaps :
     ByteString keyBytes
 KEM_Decaps ciphertext secretKey = sessionKey
   where
-    // Extract components from secret key: z || pkh || pk || sk_cpa
+    // Extract components from secret key: z || pk_hash || pk || sk_cpa
     z        : ByteString keyBytes
     z        = take`{keyBytes} secretKey
 
-    pkh      : ByteString hashBytes
-    pkh      = take`{hashBytes} (drop`{keyBytes} secretKey)
+    pk_hash  : ByteString hashBytes
+    pk_hash  = take`{hashBytes} (drop`{keyBytes} secretKey)
 
     pk       : ByteString publicKeyBytes
     pk       = take`{publicKeyBytes} (drop`{keyBytes + hashBytes} secretKey)
@@ -137,9 +137,9 @@ KEM_Decaps ciphertext secretKey = sessionKey
     m'       : ByteString (N / 8)
     m'       = PKE_Decrypt ciphertext sk_cpa
 
-    // Re-derive r' and K_hat' using pkh and m'
+    // Re-derive r' and K_hat' using pk_hash and m'
     buf      : ByteString (hashBytes + N / 8)
-    buf      = pkh # m'
+    buf      = pk_hash # m'
 
     rk'      : ByteString 64
     rk'      = SHA3_512::hashBytes buf

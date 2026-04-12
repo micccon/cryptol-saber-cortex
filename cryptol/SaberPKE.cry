@@ -30,7 +30,7 @@ PKE_KeyGenDet seedAInput seedS = (publicKey, secretKey)
     b         = MatrixVectorMul (transpose _A) s + h
 
     bp        : PolyVec_Zp
-    bp        = RoundPolyVec_ZqToZp b
+    bp        = ShiftPolyVec_ZqToZp b
 
     secretKey : ByteString indcpaSecretKeyBytes
     secretKey = PolyVec2BS s
@@ -113,7 +113,7 @@ PKE_Decrypt ciphertext secretKey = plaintext
     bp        = BS2PolyVec`{ep} ctBytes
 
     sp        : PolyVec_Zp
-    sp        = RoundPolyVec_ZqToZp s
+    sp        = ModPolyVec_ZqToZp s
 
     // Compute v = <b', s>
     v         : Poly_Zp
@@ -165,7 +165,7 @@ PKE_EncDet m seedS publicKey = ct
     b'      = MatrixVectorMul _A s' + h
 
     b'p     : PolyVec_Zp
-    b'p     = RoundPolyVec_ZqToZp b'
+    b'p     = ShiftPolyVec_ZqToZp b'
 
     // Decode the public key vector
     b       : PolyVec_Zp
@@ -173,7 +173,7 @@ PKE_EncDet m seedS publicKey = ct
 
     // Round s' to Zp and compute the inner product v'
     s'p     : PolyVec_Zp
-    s'p     = RoundPolyVec_ZqToZp s'
+    s'p     = ModPolyVec_ZqToZp s'
 
     v'      : Poly_Zp
     v'      = InnerProd b s'p

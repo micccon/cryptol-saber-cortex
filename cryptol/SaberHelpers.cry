@@ -45,20 +45,27 @@ property check_HammingWeight_bounded (bs : BitString 8) =
 
 //===RANDBYTES FUNCTION======================================================
 /**
- * Produce a deterministic byte string for testing.
+ * Produce a deterministic byte string for testing purposes.
  *
  * The output length is `n` bytes (selected at the call site as a type
- * parameter), and bytes alternate as `6, 7, 6, 7, ...`.
+ * parameter). Each call with a different integer seed produces a different
+ * byte string, making it suitable for generating distinct keys and seeds
+ * in tests.
  */
-RandBytes:
+RandBytes :
     {n}
-    (fin n, n >= 1)
-    => Integer -> ByteString n
-RandBytes n=
-    [if num % 2 == 0 then 7 else 6 | num <- [1 .. n]]
+    (fin n, n >= 1) =>
+    Integer -> ByteString n
+RandBytes seed =
+    [ fromInteger ((seed * 6364136223846793005 + 1442695040888963407
+                    + toInteger i) % 256)
+    | i <- [1 .. n] ]
 
-property check_RandBytes =
-    RandBytes 32 == [if num % 2 == 0 then 7 else 6 | num <- [1 .. 32]]
+property check_RandBytes_distinct =
+    RandBytes 0 != (RandBytes 1 : ByteString 32)
+
+property check_RandBytes_deterministic =
+    RandBytes 0 == (RandBytes 0 : ByteString 32)
 
 
 
@@ -103,7 +110,7 @@ ConstPolyMatrix elementVal = [ ConstPolyVec elementVal | _ <- [0 .. l - 1] ]
 
 
 
-//===POLY ROUNDING FUNCTIONS================================================
+//===POLY ROUNDING/MOD FUNCTIONS============================================
 /**
  * Round a polynomial from Zq to Zp by keeping the least significant ep bits.
  */
@@ -148,3 +155,15 @@ RoundPoly_Z2ToZp poly = [ zext coeff | coeff <- poly ]
 
 RoundPolyVec_Z2ToZp : PolyVec Z2 -> PolyVec Zp
 RoundPolyVec_Z2ToZp vec = [ RoundPoly_Z2ToZp p | p <- vec ]
+
+/**
+ * SHIFTRIGHT(EQ - EP): divide by 2^(eq-ep), keeping top ep bits
+ */
+ShiftPolyVec_ZqToZp : PolyVec_Zq -> PolyVec_Zp
+ShiftPolyVec_ZqToZp vec = [ [ take`{ep} coeff | coeff <- poly ] | poly <- vec ]
+
+/**
+ * MOD p: keep bottom ep bits
+ */
+ModPolyVec_ZqToZp : PolyVec_Zq -> PolyVec_Zp
+ModPolyVec_ZqToZp vec = [ [ drop`{eq - ep} coeff | coeff <- poly ] | poly <- vec ]
