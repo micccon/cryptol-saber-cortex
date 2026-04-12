@@ -4,6 +4,7 @@ import SaberKEM
 import SaberPKE
 import SaberConstants
 import SaberHelpers
+import SaberAlgorithms
 import SaberTypes
 import Primitive::Keyless::Hash::SHA3::Instantiations::SHA3_256 as SHA3_256
 import Primitive::Keyless::Hash::SHA3::Instantiations::SHA3_512 as SHA3_512

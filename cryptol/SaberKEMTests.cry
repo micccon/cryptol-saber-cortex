@@ -43,3 +43,18 @@ property check_KEM_roundtrip_sequential =
                0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
                0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
                0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20]
+
+/**
+ * Full KEM roundtrip over random keys and message seeds.
+ * Use `:set tests=5` and `:check check_KEM_roundtrip` to run.
+ * Note: each test takes ~10 minutes due to MatrixVectorMul overhead.
+ */
+property check_KEM_roundtrip
+    (seedA   : ByteString seedBytes)
+    (seedS   : ByteString noiseSeedBytes)
+    (z       : ByteString keyBytes)
+    (m       : ByteString (N / 8)) =
+    KEM_Decaps ct sk == ss_enc
+    where
+        (pk, sk)    = KEM_KeyGenDet seedA seedS z
+        (ct, ss_enc) = KEM_EncapsDet m pk

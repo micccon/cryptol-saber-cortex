@@ -33,10 +33,15 @@ PKE_KeyGenDet seedAInput seedS = (publicKey, secretKey)
     bp        = ShiftPolyVec_ZqToZp b
 
     secretKey : ByteString indcpaSecretKeyBytes
-    secretKey = PolyVec2BS s
+    secretKey = PolyVec2BS s // --- ORIGINALLY
 
     publicKey : ByteString indcpaPublicKeyBytes
-    publicKey = seedA # PolyVec2BS bp
+    publicKey = seedA # PolyVec2BS bp // --- ORIGINALLY
+
+ // NOTE: The order of concatenation here (seedA || packed bp) is the opposite of the order specified in the SABER spec, 
+ // but is necessary to match the test vectors we have (per `indcpa.c` in the reference implementation). We have confirmed that 
+ // this is the order used in the test vectors by looking at the reference implementation's `indcpa.c` file and verifying that 
+ // it concatenates the public key components in this order.
 
 /**
  * PKE KeyGen function where the seeds are NOT provided. Rather, they are
@@ -92,25 +97,27 @@ PKE_Decrypt ciphertext secretKey = plaintext
   where
     // Deserialize secret key
     s         : PolyVec_Zq
-    s         = BS2PolyVec`{eq} secretKey
+    s         = BS2PolyVec`{eq} secretKey // --- ORIGINALLY
     
     // Split ciphertext into cm bytes and b' bytes
     cmBytes   : ByteString (et * N / 8)
-    cmBytes   = take`{et * N / 8} ciphertext
+    cmBytes   = take`{et * N / 8} ciphertext // --- ORIGINALLY
 
     ctBytes   : ByteString (l * ep * N / 8)
-    ctBytes   = drop`{et * N / 8} ciphertext
+    ctBytes   = drop`{et * N / 8} ciphertext // --- ORIGINALLY
+
+ // More f***ing inconsistencies between the spec and reference implementation. Yippie!!
 
     // Deserialize cm and lift from Zt to Zp, then shift left by (EP - ET)
     cmT       : Poly_Zt
-    cmT       = BS2Poly`{et} cmBytes
+    cmT       = BS2Poly`{et} cmBytes // --- ORIGINALLY
 
     cmP       : Poly_Zp
     cmP       = PolyShiftLeftN (RoundPoly_ZtToZp cmT) (`ep - `et)
 
     // Deserialize b' and round s down to Zp
     bp        : PolyVec_Zp
-    bp        = BS2PolyVec`{ep} ctBytes
+    bp        = BS2PolyVec`{ep} ctBytes // --- ORIGINALLY
 
     sp        : PolyVec_Zp
     sp        = ModPolyVec_ZqToZp s
@@ -129,7 +136,7 @@ PKE_Decrypt ciphertext secretKey = plaintext
     m'        = [ drop`{ep - 1} c | c <- shifted ]
 
     plaintext : ByteString (N / 8)
-    plaintext = Poly2BS m'
+    plaintext = Poly2BS m' // --- ORIGINALLY
 
 
 
@@ -148,10 +155,12 @@ PKE_EncDet m seedS publicKey = ct
   where
     // Split public key into seedA and packed b vector
     seedA   : ByteString seedBytes
-    seedA   = take`{seedBytes} publicKey
+    seedA   = take`{seedBytes} publicKey // --- ORIGINALLY
 
     pkBytes : ByteString (indcpaPublicKeyBytes - seedBytes)
-    pkBytes = drop`{seedBytes} publicKey
+    pkBytes = drop`{seedBytes} publicKey // --- ORIGINALLY
+
+ // NOTE: See note in PKE_KeyGenDet about the order of public key components.
 
     // Generate A from seedA, and secret vector s' from seedS
     _A      : PolyMatrix_Zq
@@ -169,7 +178,7 @@ PKE_EncDet m seedS publicKey = ct
 
     // Decode the public key vector
     b       : PolyVec_Zp
-    b       = BS2PolyVec`{ep} pkBytes
+    b       = BS2PolyVec`{ep} pkBytes // --- ORIGINALLY
 
     // Round s' to Zp and compute the inner product v'
     s'p     : PolyVec_Zp
@@ -180,7 +189,7 @@ PKE_EncDet m seedS publicKey = ct
 
     // Convert message to Z2 polynomial, lift to Zp, and shift left by (EP - 1)
     mp_Z2   : Poly_Z2
-    mp_Z2   = BS2Poly m
+    mp_Z2   = BS2Poly m // --- ORIGINALLY
 
     mp      : Poly_Zp
     mp      = [ zext (mp_Z2 @ i) << (`ep - 1) | i <- [0 .. 255] ]
@@ -197,7 +206,9 @@ PKE_EncDet m seedS publicKey = ct
 
     // Ciphertext = packed cm || packed b'
     ct      : ByteString bytesCCADec
-    ct      = Poly2BS cm # PolyVec2BS b'p
+    ct      = Poly2BS cm # PolyVec2BS b'p // --- ORIGINALLY
+
+ // More f***ing inconsistencies between the spec and reference implementation. Yippie!!
 
 /**
  * PKE Encrypt function where the seeds are NOT provided. Rather, they are

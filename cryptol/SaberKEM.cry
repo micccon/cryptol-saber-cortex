@@ -26,7 +26,7 @@ KEM_KeyGenDet seedAInput seedS z = (publicKey, secretKey)
     pk_hash      = SHA3_256::hashBytes pk
 
     secretKey    : ByteString secretKeyBytes
-    secretKey    = z # pk_hash # pk # sk_cpa
+    secretKey    = z # pk_hash # pk # sk_cpa // --- ORIGINALLY
 
     publicKey    : ByteString publicKeyBytes
     publicKey    = pk
@@ -122,16 +122,16 @@ KEM_Decaps ciphertext secretKey = sessionKey
   where
     // Extract components from secret key: z || pk_hash || pk || sk_cpa
     z        : ByteString keyBytes
-    z        = take`{keyBytes} secretKey
+    z        = take`{keyBytes} secretKey // --- ORIGINALLY
 
     pk_hash  : ByteString hashBytes
-    pk_hash  = take`{hashBytes} (drop`{keyBytes} secretKey)
+    pk_hash  = take`{hashBytes} (drop`{keyBytes} secretKey) // --- ORIGINALLY
 
     pk       : ByteString publicKeyBytes
-    pk       = take`{publicKeyBytes} (drop`{keyBytes + hashBytes} secretKey)
+    pk       = take`{publicKeyBytes} (drop`{keyBytes + hashBytes} secretKey) // --- ORIGINALLY
 
     sk_cpa   : ByteString indcpaSecretKeyBytes
-    sk_cpa   = drop`{keyBytes + hashBytes + publicKeyBytes} secretKey
+    sk_cpa   = drop`{keyBytes + hashBytes + publicKeyBytes} secretKey // --- ORIGINALLY
 
     // Decrypt ciphertext to recover m'
     m'       : ByteString (N / 8)
@@ -167,3 +167,21 @@ KEM_Decaps ciphertext secretKey = sessionKey
 
     sessionKey : ByteString keyBytes
     sessionKey = SHA3_256::hashBytes rk_final
+
+
+
+//===KEM ROUNDTRIP PROPERTIES===============================================
+/**
+ * Full KEM roundtrip over random keys and message seeds.
+ * Use `:set tests=5` and `:check check_KEM_roundtrip` to run.
+ * Note: each test takes ~10 minutes due to MatrixVectorMul overhead.
+ */
+property check_KEM_roundtrip
+    (seedA   : ByteString seedBytes)
+    (seedS   : ByteString noiseSeedBytes)
+    (z       : ByteString keyBytes)
+    (m       : ByteString (N / 8)) =
+    KEM_Decaps ct sk == ss_enc
+    where
+        (pk, sk)    = KEM_KeyGenDet seedA seedS z
+        (ct, ss_enc) = KEM_EncapsDet m pk

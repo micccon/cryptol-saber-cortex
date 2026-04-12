@@ -55,7 +55,11 @@ BS2Poly:
     {k}
     (fin k, k >= 1)
     => ByteString (k * N / 8) -> Poly [k]
-BS2Poly byteString = split`{each=k} (join byteString)
+BS2Poly byteString = split`{each=k} (join byteString) // --- ORIGINALLY
+// =====================================================
+// Alternative implementation to, YOU GUESSED IT, match the reference implementation's BS<-->Poly conversion order!!!!
+// I LOVE this game we're playing!!!
+// BS2Poly byteString = split`{each=k} (join [ reverse b | b <- byteString ])
 
 /**
  * Convert a polynomial with `k`-bit coefficients into a byte string.
@@ -66,7 +70,11 @@ Poly2BS:
     {k}
     (fin k, k >= 1)
     => Poly [k] -> ByteString (k * N / 8)
-Poly2BS polynomial = split`{each=8} (join polynomial)
+Poly2BS polynomial = split`{each=8} (join polynomial) // --- ORIGINALLY
+// =====================================================
+// Alternative implementation to, YOU GUESSED IT, match the reference implementation's BS<-->Poly conversion order!!!!
+// I LOVE this game we're playing!!!
+// Poly2BS polynomial = [ reverse b | b <- split`{each=8} (join polynomial) ]
 
 // Sanity check BS<-->Poly conversion properties
 // =============================================
