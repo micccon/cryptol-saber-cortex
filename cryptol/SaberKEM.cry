@@ -4,11 +4,15 @@ import SaberConstants
 import SaberPKE
 import SaberHelpers
 import SaberAlgorithms
-import SHA3Bytes256
-import SHA3Bytes512
+import Primitive::Keyless::Hash::SHA3::Instantiations::SHA3_256 as SHA3_256
+import Primitive::Keyless::Hash::SHA3::Instantiations::SHA3_512 as SHA3_512
 
-//==========================================================================
-
+//===KEM KEYGEN=============================================================
+/**
+ * KEM KeyGen function where the seeds are provided, rather than produced
+ * randomly as a part of the function. This is necessary for KAT testing
+ * and evaluation.
+ */
 KEM_KeyGenDet :
     ByteString seedBytes ->
     ByteString noiseSeedBytes ->
@@ -16,151 +20,168 @@ KEM_KeyGenDet :
     (ByteString publicKeyBytes, ByteString secretKeyBytes)
 KEM_KeyGenDet seedAInput seedS z = (publicKey, secretKey)
   where
-    (pKey, sKey) = PKE_KeyGenDet seedAInput seedS
+    (pk, sk_cpa) = PKE_KeyGenDet seedAInput seedS
 
-    hash_pk : ByteString 32
-    hash_pk = Hash256Bytes pKey
+    pk_hash      : ByteString hashBytes
+    pk_hash      = SHA3_256::hashBytes pk
 
-    secretKey = sKey # pKey # hash_pk # z
-    publicKey = pKey
+    secretKey    : ByteString secretKeyBytes
+    secretKey    = z # pk_hash # pk # sk_cpa // --- ORIGINALLY
 
-KEM_KeyGen :
-    (ByteString publicKeyBytes, ByteString secretKeyBytes)
-KEM_KeyGen = KEM_KeyGenDet seedAInput seedS z
-  where
-    seedAInput : ByteString seedBytes
-    seedAInput = RandBytes `seedBytes
+    publicKey    : ByteString publicKeyBytes
+    publicKey    = pk
 
-    seedS : ByteString noiseSeedBytes
-    seedS = RandBytes `noiseSeedBytes
+/**
+ * KEM KeyGen function where the seeds are NOT provided. Rather, they are
+ * "randomly" produced via our lovely RandBytes function (just a bunch of
+ * continuous 676767's... lol. It's a funny number reference. Get it?)
+ */
+KEM_KeyGen : (ByteString publicKeyBytes, ByteString secretKeyBytes)
+KEM_KeyGen = KEM_KeyGenDet (RandBytes 0) (RandBytes 1) (RandBytes 3)
 
-    z : ByteString keyBytes
-    z = RandBytes `keyBytes
+// Sanity check KEM keygen properties
+// ==================================
+property check_KEM_KeyGen_pk_length =
+    length pk == `publicKeyBytes
+    where (pk, _) = KEM_KeyGen
 
-property KEM_KeyGenDetMatchesKeyGen =
-    KEM_KeyGenDet
-        (RandBytes `seedBytes : ByteString seedBytes)
-        (RandBytes `noiseSeedBytes : ByteString noiseSeedBytes)
-        (RandBytes `keyBytes : ByteString keyBytes) ==
-    KEM_KeyGen
+property check_KEM_KeyGen_sk_length =
+    length sk == `secretKeyBytes
+    where (_, sk) = KEM_KeyGen
 
-property KEM_KeyGenProperty =
-    KEM_KeyGen == (pKey, sKey # pKey # hash_pk # z)
-  where
-    (pKey, sKey) = PKE_KeyGen
 
-    hash_pk : ByteString 32
-    hash_pk = Hash256Bytes pKey
 
-    z : ByteString keyBytes
-    z = RandBytes `keyBytes
-
-KEM_KeyGenExample : Bit
-KEM_KeyGenExample = KEM_KeyGenProperty
-
+//===KEM ENCAPS=============================================================
+/**
+ * KEM Encapsulation function where the message randomness is provided
+ * deterministically. This is necessary for KAT testing and evaluation.
+ */
 KEM_EncapsDet :
-    ByteString keyBytes ->
+    ByteString (N / 8) ->
     ByteString publicKeyBytes ->
-    (ByteString keyBytes, ByteString bytesCCADec)
-KEM_EncapsDet mRaw publicKey = (sessionKey, ciphertext)
+    (ByteString bytesCCADec, ByteString keyBytes)
+KEM_EncapsDet m pk = (ciphertext, sessionKey)
   where
-    m : ByteString keyBytes
-    m = Hash256Bytes mRaw
+    // Hash m to get the actual message (line 2 of Algorithm 21)
+    m_hashed     : ByteString (N / 8)
+    m_hashed     = SHA3_256::hashBytes m
 
-    hash_pk : ByteString keyBytes
-    hash_pk = Hash256Bytes publicKey
+    // Hash pk to get pk_hash (used in G)
+    pk_hash      : ByteString hashBytes
+    pk_hash      = SHA3_256::hashBytes pk
 
-    buf : ByteString (2 * keyBytes)
-    buf = hash_pk # m
+    // buf = pk_hash || m_hashed, then hash with SHA3-512 to get (r, K_hat)
+    buf          : ByteString (hashBytes + N / 8)
+    buf          = pk_hash # m_hashed
 
-    rk : ByteString (2 * keyBytes)
-    rk = Hash512Bytes buf
+    rk           : ByteString 64
+    rk           = SHA3_512::hashBytes buf
 
-    r : ByteString keyBytes
-    r = take`{keyBytes} rk
+    // Split rk into r (encapsulation seed) and K_hat (pre-session key)
+    r            : ByteString keyBytes
+    r            = take`{keyBytes} rk
 
-    k : ByteString keyBytes
-    k = drop`{keyBytes} rk
+    k_hat        : ByteString keyBytes
+    k_hat        = drop`{keyBytes} rk
 
-    ciphertext : ByteString bytesCCADec
-    ciphertext = PKE_Enc m r publicKey
+    // Encrypt m_hashed using r as the seed
+    ciphertext   : ByteString bytesCCADec
+    ciphertext   = PKE_EncDet m_hashed r pk
 
-    r' : ByteString keyBytes
-    r' = Hash256Bytes ciphertext
+    // Session key = SHA3-256(SHA3-256(ciphertext) || K_hat)
+    ct_hash      : ByteString hashBytes
+    ct_hash      = SHA3_256::hashBytes ciphertext
 
-    rk' : ByteString (2 * keyBytes)
-    rk' = r' # k
+    rk2          : ByteString (hashBytes + keyBytes)
+    rk2          = ct_hash # k_hat
 
-    sessionKey : ByteString keyBytes
-    sessionKey = Hash256Bytes rk'
+    sessionKey   : ByteString keyBytes
+    sessionKey   = SHA3_256::hashBytes rk2
 
+/**
+ * KEM Encaps function where the seeds are NOT provided. Rather, they are
+ * "randomly" produced via our lovely RandBytes function (just a bunch of
+ * continuous 676767's... lol. It's a funny number reference. Get it?)
+ */
 KEM_Encaps :
-    ByteString publicKeyBytes -> (ByteString keyBytes, ByteString bytesCCADec)
-KEM_Encaps publicKey = KEM_EncapsDet mRaw publicKey
-  where
-    mRaw : ByteString keyBytes
-    mRaw = RandBytes `keyBytes
+    ByteString publicKeyBytes ->
+    (ByteString bytesCCADec, ByteString keyBytes)
+KEM_Encaps pk = KEM_EncapsDet (RandBytes 4) pk
 
+
+
+//===KEM DECAPS=============================================================
+/**
+ * Corresponding KEM Decapsulation function.
+ */
 KEM_Decaps :
-    ByteString bytesCCADec -> ByteString secretKeyBytes -> ByteString keyBytes
+    ByteString bytesCCADec ->
+    ByteString secretKeyBytes ->
+    ByteString keyBytes
 KEM_Decaps ciphertext secretKey = sessionKey
   where
-    secretKeyCpa : ByteString indcpaSecretKeyBytes
-    secretKeyCpa = take`{indcpaSecretKeyBytes} secretKey
+    // Extract components from secret key: z || pk_hash || pk || sk_cpa
+    z        : ByteString keyBytes
+    z        = take`{keyBytes} secretKey // --- ORIGINALLY
 
-    secretKey1 : ByteString (secretKeyBytes - indcpaSecretKeyBytes)
-    secretKey1 = drop`{indcpaSecretKeyBytes} secretKey
+    pk_hash  : ByteString hashBytes
+    pk_hash  = take`{hashBytes} (drop`{keyBytes} secretKey) // --- ORIGINALLY
 
-    publicKey : ByteString publicKeyBytes
-    publicKey = take`{publicKeyBytes} secretKey1
+    pk       : ByteString publicKeyBytes
+    pk       = take`{publicKeyBytes} (drop`{keyBytes + hashBytes} secretKey) // --- ORIGINALLY
 
-    secretKey2 : ByteString (secretKeyBytes - indcpaSecretKeyBytes - publicKeyBytes)
-    secretKey2 = drop`{publicKeyBytes} secretKey1
+    sk_cpa   : ByteString indcpaSecretKeyBytes
+    sk_cpa   = drop`{keyBytes + hashBytes + publicKeyBytes} secretKey // --- ORIGINALLY
 
-    hash_pk : ByteString keyBytes
-    hash_pk = take`{keyBytes} secretKey2
+    // Decrypt ciphertext to recover m'
+    m'       : ByteString (N / 8)
+    m'       = PKE_Decrypt ciphertext sk_cpa
 
-    z : ByteString keyBytes
-    z = drop`{keyBytes} secretKey2
+    // Re-derive r' and K_hat' using pk_hash and m'
+    buf      : ByteString (hashBytes + N / 8)
+    buf      = pk_hash # m'
 
-    m : ByteString keyBytes
-    m = PKE_Decrypt ciphertext secretKeyCpa
+    rk'      : ByteString 64
+    rk'      = SHA3_512::hashBytes buf
 
-    buf : ByteString (2 * keyBytes)
-    buf = hash_pk # m
+    r'       : ByteString keyBytes
+    r'       = take`{keyBytes} rk'
 
-    rk : ByteString (2 * keyBytes)
-    rk = Hash512Bytes buf
+    k_hat'   : ByteString keyBytes
+    k_hat'   = drop`{keyBytes} rk'
 
-    r : ByteString keyBytes
-    r = take`{keyBytes} rk
+    // Re-encrypt to verify
+    c'       : ByteString bytesCCADec
+    c'       = PKE_EncDet m' r' pk
 
-    k : ByteString keyBytes
-    k = drop`{keyBytes} rk
+    // Hash ciphertext
+    ct_hash  : ByteString hashBytes
+    ct_hash  = SHA3_256::hashBytes ciphertext
 
-    ciphertext' : ByteString bytesCCADec
-    ciphertext' = PKE_Enc m r publicKey
+    // Constant-time selection: if c' == c use K_hat', else use z
+    k_select : ByteString keyBytes
+    k_select = if c' == ciphertext then k_hat' else z
 
-    c : Bit
-    c = VerifyBS ciphertext' ciphertext
-
-    r' : ByteString keyBytes
-    r' = Hash256Bytes ciphertext
-
-    temp : ByteString (2 * keyBytes)
-    temp = if c then (r' # k) else (r' # z)
+    rk_final : ByteString (hashBytes + keyBytes)
+    rk_final = ct_hash # k_select
 
     sessionKey : ByteString keyBytes
-    sessionKey = Hash256Bytes temp
+    sessionKey = SHA3_256::hashBytes rk_final
 
-property KEM_EncapsDecapsRoundTrip =
-    KEM_Decaps ciphertext secretKey == sessionKey
-  where
-    (publicKey, secretKey) = KEM_KeyGen
-    (sessionKey, ciphertext) = KEM_Encaps publicKey
 
-property KEM_EncapsDecapsExample =
-  KEM_Decaps ciphertext secretKey == sessionKey
-  where
-    (publicKey, secretKey) = KEM_KeyGen
-    (sessionKey, ciphertext) = KEM_Encaps publicKey
+
+//===KEM ROUNDTRIP PROPERTIES===============================================
+/**
+ * Full KEM roundtrip over random keys and message seeds.
+ * Use `:set tests=5` and `:check check_KEM_roundtrip` to run.
+ * Note: each test takes ~10 minutes due to MatrixVectorMul overhead.
+ */
+property check_KEM_roundtrip
+    (seedA   : ByteString seedBytes)
+    (seedS   : ByteString noiseSeedBytes)
+    (z       : ByteString keyBytes)
+    (m       : ByteString (N / 8)) =
+    KEM_Decaps ct sk == ss_enc
+    where
+        (pk, sk)    = KEM_KeyGenDet seedA seedS z
+        (ct, ss_enc) = KEM_EncapsDet m pk

@@ -1,36 +1,92 @@
 module SaberTypes where
 import SaberConstants
 
-// Byte type
-type Byte = [8]
+// Byte, bit- and byte-string types
+// ================================
+type Byte          = [8]
+type BitString n   = [n]
+type ByteString n  = [n] Byte
 
-// String type
-type BitString n = [n]
-type ByteString n = [n] Byte
 
-// Z types
-type Zq = [eq]
-type Zp = [ep]
-type Zt = [et]
-type Z2 = [1]
 
-// Polynomial types always have 256 coefficients in Saber
-type Poly t = [256] t
-type Poly_Zq = Poly Zq
-type Poly_Zp = Poly Zp
-type Poly_Zt = Poly Zt
-type Poly_Z2 = Poly Z2
+// Polynomial integer types (different-widthed integers)
+// =====================================================
+type Zq  = [eq]
+type Zp  = [ep]
+type Zt  = [et]
+type Z2  = [1]
 
-// Vector types of l polynomials
-type PolyVec t = [l] (Poly t)
-type PolyVec_Zq = PolyVec Zq
-type PolyVec_Zp = PolyVec Zp
-type PolyVec_Zt = PolyVec Zt
-type PolyVec_Z2 = PolyVec Z2
+// Sanity check coefficient width properties
+// =========================================
+property check_eq  = `eq == (13 : Integer)
+property check_ep  = `ep == (10 : Integer)
+property check_et  = `et == (4  : Integer)
 
-// Matrix types of l x l polynomials
-type PolyMatrix t = [l] (PolyVec t)
-type PolyMatrix_Zq = PolyMatrix Zq
-type PolyMatrix_Zp = PolyMatrix Zp
-type PolyMatrix_Zt = PolyMatrix Zt
-type PolyMatrix_Z2 = PolyMatrix Z2
+
+
+// Polynomial types (corresponding to various rings)
+// =================================================
+type Poly t    = [N] t
+type Poly_Zq   = Poly Zq
+type Poly_Zp   = Poly Zp
+type Poly_Zt   = Poly Zt
+type Poly_Z2   = Poly Z2
+
+// Sanity check polynomial properties
+// ==================================
+property check_Poly_Zq_length   = `(N * eq) == (256 * 13 : Integer)
+property check_Poly_Zp_length   = `(N * ep) == (256 * 10 : Integer)
+property check_Poly_Zt_length   = `(N * et) == (256 * 4  : Integer)
+property check_Poly_Z2_length   = `(N * 1)  == (256 * 1  : Integer)
+
+property check_all_Poly_lengths =
+    check_Poly_Zq_length       /\
+    check_Poly_Zp_length       /\
+    check_Poly_Zt_length       /\
+    check_Poly_Z2_length
+
+
+
+// Polynomial vector types (for Saber, will be vectors of l polynomials)
+// =====================================================================
+type PolyVec t   = [l] (Poly t)
+type PolyVec_Zq  = PolyVec Zq
+type PolyVec_Zp  = PolyVec Zp
+type PolyVec_Zt  = PolyVec Zt
+type PolyVec_Z2  = PolyVec Z2
+
+// Sanity check vector properties
+// ==============================
+property check_PolyVec_Zq_size   = `(l * N * eq) == (3 * 256 * 13 : Integer)
+property check_PolyVec_Zp_size   = `(l * N * ep) == (3 * 256 * 10 : Integer)
+property check_PolyVec_Zt_size   = `(l * N * et) == (3 * 256 * 4  : Integer)
+property check_PolyVec_Z2_size   = `(l * N * 1)  == (3 * 256 * 1  : Integer)
+
+property check_all_PolyVec_sizes =
+    check_PolyVec_Zq_size       /\
+    check_PolyVec_Zp_size       /\
+    check_PolyVec_Zt_size       /\
+    check_PolyVec_Z2_size
+
+
+
+// Polynomial matrix types (for Saber, will be l x l matrices of polynomials)
+// ==========================================================================
+type PolyMatrix t   = [l] (PolyVec t)
+type PolyMatrix_Zq  = PolyMatrix Zq
+type PolyMatrix_Zp  = PolyMatrix Zp
+type PolyMatrix_Zt  = PolyMatrix Zt
+type PolyMatrix_Z2  = PolyMatrix Z2
+
+// Sanity check matrix properties
+// ==============================
+property check_PolyMatrix_Zq_size   = `(l * l * N * eq) == (3 * 3 * 256 * 13 : Integer)
+property check_PolyMatrix_Zp_size   = `(l * l * N * ep) == (3 * 3 * 256 * 10 : Integer)
+property check_PolyMatrix_Zt_size   = `(l * l * N * et) == (3 * 3 * 256 * 4  : Integer)
+property check_PolyMatrix_Z2_size   = `(l * l * N * 1)  == (3 * 3 * 256 * 1  : Integer)
+
+property check_all_PolyMatrix_sizes = 
+    check_PolyMatrix_Zq_size       /\
+    check_PolyMatrix_Zp_size       /\
+    check_PolyMatrix_Zt_size       /\
+    check_PolyMatrix_Z2_size

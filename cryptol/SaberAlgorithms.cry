@@ -1,25 +1,21 @@
 module SaberAlgorithms where
 import SaberTypes
 import SaberConstants
-import SHAKE128
+import Primitive::Keyless::Hash::SHA3::Instantiations::SHAKE128 as SHAKE128
 import SaberHelpers
 
+//===SHIFT FUNCTIONS========================================================
 /**
  * Shift every coefficient of a polynomial left by `shift` bits.
  *
  * For fixed-width coefficient types (such as `Zq`), this corresponds to
  * multiplication by `2^shift` with wraparound in that coefficient domain.
  */
-PolyShiftLeftN:
+PolyShiftLeftN :
     {t}
-    (fin t)
-    => Poly [t] -> Integer -> Poly [t]
-PolyShiftLeftN poly shift = [ poly @ i << shift | i <- [0 .. 255] ]
-
-property PolyShiftLeftNProperty (poly : Poly Zq) =
-    PolyShiftLeftN poly shift == [ poly @ i << shift | i <- [0 .. 255] ]
-        where
-            shift = 2
+    (fin t) =>
+    Poly [t] -> [8] -> Poly [t]
+PolyShiftLeftN poly shift = [ c << shift | c <- poly ]
 
 /**
  * Shift every coefficient of a polynomial right by `shift` bits.
@@ -27,17 +23,28 @@ property PolyShiftLeftNProperty (poly : Poly Zq) =
  * For fixed-width coefficient types, this corresponds to dropping lower bits,
  * i.e. a power-of-two scaling down in bit representation.
  */
-PolyShiftRightN:
+PolyShiftRightN :
     {t}
-    (fin t)
-    => Poly [t] -> Integer -> Poly [t]
-PolyShiftRightN poly shift = [ poly @ i >> shift | i <- [0 .. 255] ]
+    (fin t) =>
+    Poly [t] -> [8] -> Poly [t]
+PolyShiftRightN poly shift = [ c >> shift | c <- poly ]
 
-property PolyShiftRightNProperty (poly : Poly Zq) =
-    PolyShiftRightN poly shift == [ poly @ i >> shift | i <- [0 .. 255] ]
-        where
-            shift = 2
-    
+// Sanity check polynomial shift properties
+// ========================================
+
+// Check that shifting right, then left, by the same amount "zeroes out" the low-order bits
+// NOTE: This property uses a magic "% 4" that is tied to the specific shift amount of 2.
+//       If other shifts are to be tested, the magic "% 4" would need to be adjusted accordingly.
+property check_shift_roundtrip (poly : Poly Zq) =
+    and [ c % 4 == 0 | c <- PolyShiftLeftN (PolyShiftRightN poly 2) 2 ]
+
+// Check the shifting right by the full width produces all zeroes
+property check_shift_right_full (poly : Poly Zq) =
+    PolyShiftRightN poly `eq == zero
+
+
+
+//===BS<-->Poly CONVERSIONS=================================================
 /**
  * Convert a byte string into a polynomial with `k`-bit coefficients.
  *
@@ -46,12 +53,13 @@ property PolyShiftRightNProperty (poly : Poly Zq) =
  */
 BS2Poly:
     {k}
-    (fin k)
-    => ByteString (k * 256/8) -> Poly [k]
-BS2Poly byteString = split`{each=k} (join byteString)
-
-property BS2PolyProperty (byteString : ByteString (4 * 32)) =
-    BS2Poly `{4} byteString == split`{each=4} (join byteString)
+    (fin k, k >= 1)
+    => ByteString (k * N / 8) -> Poly [k]
+BS2Poly byteString = split`{each=k} (join byteString) // --- ORIGINALLY
+// =====================================================
+// Alternative implementation to, YOU GUESSED IT, match the reference implementation's BS<-->Poly conversion order!!!!
+// I LOVE this game we're playing!!!
+// BS2Poly byteString = split`{each=k} (join [ reverse b | b <- byteString ])
 
 /**
  * Convert a polynomial with `k`-bit coefficients into a byte string.
@@ -60,28 +68,34 @@ property BS2PolyProperty (byteString : ByteString (4 * 32)) =
  */
 Poly2BS:
     {k}
-    (fin k)
-    => Poly [k] -> ByteString (k * 256/8)
-Poly2BS polynomial = split`{each=8} (join polynomial)
+    (fin k, k >= 1)
+    => Poly [k] -> ByteString (k * N / 8)
+Poly2BS polynomial = split`{each=8} (join polynomial) // --- ORIGINALLY
+// =====================================================
+// Alternative implementation to, YOU GUESSED IT, match the reference implementation's BS<-->Poly conversion order!!!!
+// I LOVE this game we're playing!!!
+// Poly2BS polynomial = [ reverse b | b <- split`{each=8} (join polynomial) ]
 
-property Poly2BSProperty (polynomial : Poly [4]) =
-    Poly2BS `{4} polynomial == split`{each=8} (join polynomial)
-
-
+// Sanity check BS<-->Poly conversion properties
+// =============================================
 /** 
  * If BS2Poly and Poly2BS are implemented correctly, then either function
  * should act as the "inverse" to the other. These properties prove that 
  * formally. 
- *
- * The first proves that BS2Poly "undoes" Poly2BS.
- * The second proves that Poly2BS "undoes" BS2Poly.
  */
-property Poly2BS_BS2Poly_RoundTrip_4 (p : Poly [4]) =
-    BS2Poly `{4} (Poly2BS `{4} p) == p
-property BS2Poly_Poly2BS_RoundTrip_4 (bs : ByteString (4 * 256/8)) =
-        Poly2BS `{4} (BS2Poly `{4} bs) == bs
+property check_Poly2BS_BS2Poly_Zq (p : Poly_Zq) =
+    BS2Poly (Poly2BS p) == p
+property check_BS2Poly_Poly2BS_Zq (bs : ByteString (eq * N / 8)) =
+    Poly2BS ((BS2Poly bs) : Poly_Zq) == bs
+
+property check_Poly2BS_BS2Poly_Zp (p : Poly_Zp) =
+    BS2Poly (Poly2BS p) == p
+property check_BS2Poly_Poly2BS_Zp (bs : ByteString (ep * N / 8)) =
+    Poly2BS ((BS2Poly bs) : Poly_Zp) == bs
 
 
+
+//===BS<-->PolyVec CONVERSIONS==============================================
 /**
  * Convert a byte string into a vector of `l` polynomials with `k`-bit
  * coefficients.
@@ -91,12 +105,9 @@ property BS2Poly_Poly2BS_RoundTrip_4 (bs : ByteString (4 * 256/8)) =
  */
 BS2PolyVec:
     {k}
-    (fin k)
-    => ByteString (l * k * 256/8) -> PolyVec [k]
+    (fin k, k >= 1)
+    => ByteString (l * k * N / 8) -> PolyVec [k]
 BS2PolyVec byteString = [ BS2Poly polyByteString | polyByteString <- (split`{parts=l} byteString) ]
-
-property BS2PolyVecProperty (byteString : ByteString (4 * 256/8 * l)) =
-    BS2PolyVec `{4} byteString == [ BS2Poly `{4} polyByteString | polyByteString <- (split`{parts=l} byteString) ]
 
 /**
  * Convert a vector of `l` polynomials into a byte string.
@@ -105,30 +116,30 @@ property BS2PolyVecProperty (byteString : ByteString (4 * 256/8 * l)) =
  */
 PolyVec2BS:
     {k}
-    (fin k)
-    => PolyVec [k] -> ByteString (l * k * 256/8)
-PolyVec2BS vector =
-    join [ Poly2BS poly | poly <- vector ]
+    (fin k, k >= 1)
+    => PolyVec [k] -> ByteString (l * k * N / 8)
+PolyVec2BS vector = join [ Poly2BS poly | poly <- vector ]
 
-property PolyVec2BSProperty (vector : PolyVec [4]) =
-    PolyVec2BS `{4} vector == join [ Poly2BS `{4} poly | poly <- vector ]
-
-
+// Sanity check BS<-->PolyVec conversion properties
+// ================================================
 /** 
  * If BS2PolyVec and PolyVec2BS are implemented correctly, then either function
  * should act as the "inverse" to the other. These properties prove that 
  * formally. 
- *
- * The first proves that BS2PolyVec "undoes" PolyVec2BS.
- * The second proves that PolyVec2BS "undoes" BS2PolyVec.
  */
-property PolyVec2BS_BS2PolyVec_RoundTrip_4 (v : PolyVec [4]) =
-    BS2PolyVec `{4} (PolyVec2BS `{4} v) == v
-property BS2PolyVec_PolyVec2BS_RoundTrip_4 (bs : ByteString (l * 4 * 256/8)) =
-    PolyVec2BS `{4} (BS2PolyVec `{4} bs) == bs
+property check_PolyVec2BS_BS2PolyVec_Zq (v : PolyVec_Zq) =
+    BS2PolyVec (PolyVec2BS v) == v
+property check_BS2PolyVec_PolyVec2BS_Zq (bs : ByteString (l * eq * N / 8)) =
+    PolyVec2BS (BS2PolyVec`{eq} bs) == bs
+
+property check_PolyVec2BS_BS2PolyVec_Zp (v : PolyVec_Zp) =
+    BS2PolyVec (PolyVec2BS v) == v
+property check_BS2PolyVec_PolyVec2BS_Zp (bs : ByteString (l * ep * N / 8)) =
+    PolyVec2BS (BS2PolyVec`{ep} bs) == bs
 
 
 
+//===PolyMul FUNCTION========================================================
 /**
  * Compute negacyclic polynomial multiplication modulo `x^256 + 1`.
  *
@@ -137,45 +148,70 @@ property BS2PolyVec_PolyVec2BS_RoundTrip_4 (bs : ByteString (l * 4 * 256/8)) =
  * with other like terms.
  */
 PolyMul :
-    {t}
-    (fin t)
-    => Poly [t] -> Poly [t] -> Poly [t]
-PolyMul a b =
-  [ sum [ contrib i c | i <- [0 .. 255] ] | c <- [0 .. 255] ]
-  where
-    contrib i c =
-      if i <= c
-      then (a @ i) * (b @ j)
-      else negate ((a @ i) * (b @ j))
-      where
-        j = (c - i) % 256
+    {k}
+    (fin k, k >= 1)
+    => Poly [k] -> Poly [k] -> Poly [k]
+// PolyMul a b = 
+// Old, naive implementation (was too slow for actual testing purposes and concrete evaluation)
+//   [ sum [ contrib i c | i <- [0 .. 255] ] | c <- [0 .. 255] ]
+//     where
+//       contrib i c =
+//         if i <= c
+//         then (a @ i) * (b @ j)
+//         else negate ((a @ i) * (b @ j))
+//         where
+//           j = (c - i) % 256
+PolyMul a b = [ sum [ if i <= c
+                      then (a @ i) * (b @ ((c - i) % 256))
+                      else negate ((a @ i) * (b @ ((c - i) % 256)))
+                    | i <- [0 .. 255] ]
+            | c <- [0 .. 255] ]
 
-property PolyMulProperty (a : Poly Zq) (b : Poly Zq) =
-    PolyMul a b == [ sum [ contrib i c | i <- [0 .. 255] ] | c <- [0 .. 255] ]
-  where
-    contrib i c =
-      if i <= c
-      then (a @ i) * (b @ j)
-      else negate ((a @ i) * (b @ j))
-      where
-        j = (c - i) % 256
+// Sanity check negacyclic convolution properties
+// ==============================================
+property check_PolyMul_commutative (a : Poly Zq) (b : Poly Zq) =
+    PolyMul a b == PolyMul b a
+property check_PolyMul_identity (a : Poly Zq) =
+    PolyMul a one == a
+    where one = [1] # zero
+property check_PolyMul_zero (a : Poly Zq) =
+    PolyMul a zero == zero
+property check_PolyMul_distributive (a : Poly Zq) (b : Poly Zq) (c : Poly Zq) =
+    PolyMul a (zipWith (+) b c) == zipWith (+) (PolyMul a b) (PolyMul a c)
 
+
+
+//===MatrixVectorMul FUNCTION================================================
 /**
  * Multiply an `l x l` polynomial matrix by a length-`l` polynomial vector.
  *
  * Each output polynomial is the sum of `l` polynomial products along a row.
  */
 MatrixVectorMul :
-    {t}
-    (fin t)
-    => PolyMatrix [t] -> PolyVec [t] -> PolyVec [t]
+    {k}
+    (fin k, k >= 1)
+    => PolyMatrix [k] -> PolyVec [k] -> PolyVec [k]
 MatrixVectorMul matrix vector =
-    [ sum [ PolyMul (matrix @ i @ j) (vector @ j) | j <- [0 .. l-1] ] | i <- [0 .. l-1] ] 
+    // Old, naive, schoolbook method
+    // [ sum [ PolyMul (matrix @ i @ j) (vector @ j) | j <- [0 .. l-1] ] | i <- [0 .. l-1] ] 
+    [ sum (zipWith PolyMul row vector) | row <- matrix ]
 
-property MatrixVectorMulProperty (matrix : PolyMatrix Zp) (vector : PolyVec Zp) =
-    MatrixVectorMul matrix vector ==
-        [ sum [ PolyMul (matrix @ i @ j) (vector @ j) | j <- [0 .. l-1] ] | i <- [0 .. l-1] ]
+// Sanity check matrix-vector multiplication properties
+// ====================================================
+// Multiplying by the identity matrix should return the same vector
+property check_MatrixVectorMul_identity (v : PolyVec_Zq) =
+    MatrixVectorMul identityMatrix v == v
+    where
+        identityMatrix = [ [ if i == j then one else zero
+                            | j <- [0 .. l-1] ]
+                          | i <- [0 .. l-1] ]
+        one = ([1] # zero) : Poly Zq
+// Multiplying by zero matrix should give zero vector  
+property check_MatrixVectorMul_zero (v : PolyVec_Zq) =
+    MatrixVectorMul zero v == zero
 
+
+//===InnerProd FUNCTION======================================================
 /**
  * Compute the inner product of two polynomial vectors.
  *
@@ -183,13 +219,22 @@ property MatrixVectorMulProperty (matrix : PolyMatrix Zp) (vector : PolyVec Zp) 
  * products across the `l` vector positions.
  */
 InnerProd :
-    {t}
-    (fin t)
-    => PolyVec [t] -> PolyVec [t] -> Poly [t]
+    {k}
+    (fin k, k >= 1)
+    => PolyVec [k] -> PolyVec [k] -> Poly [k]
 InnerProd va vb = [ sum [ PolyMul (va @ i) (vb @ i) @ k | i <- [0..l-1] ] | k <- [0..255] ]
 
-InnerProdProperty (va : PolyVec Zp) (vb : PolyVec Zp) =
-    InnerProd va vb == [ sum [ PolyMul (va @ i) (vb @ i) @ k | i <- [0..l-1] ] | k <- [0..255] ]
+// Sanity check inner-product properties
+// =====================================
+property check_InnerProd_commutative (va : PolyVec_Zp) (vb : PolyVec_Zp) =
+    InnerProd va vb == InnerProd vb va
+property check_InnerProd_zero (va : PolyVec_Zp) =
+    InnerProd va zero == zero
+property check_InnerProd_linear (va : PolyVec_Zp) (vb : PolyVec_Zp) (vc : PolyVec_Zp) =
+    InnerProd va (zipWith (zipWith (+)) vb vc) ==
+        zipWith (+) (InnerProd va vb) (InnerProd va vc)
+
+
 
 /**
  * Generate the Saber public matrix over `Zq` from a seed using SHAKE-128.
@@ -199,84 +244,68 @@ InnerProdProperty (va : PolyVec Zp) (vb : PolyVec Zp) =
  * 1. bytes -> `eq`-bit coefficients
  * 2. coefficients -> 256-coefficient polynomials
  * 3. polynomials -> `l x l` matrix
- *
- * This matches the high-level Saber matrix-generation specification while
- * using `xofBytes` so that we stay in normal byte ordering rather than dealing
- * with raw Keccak bit ordering directly.
- *
- * The property below checks that `GenMatrix_Zq` is exactly this reshape
- * pipeline applied to the SHAKE-128 output.
  */
 GenMatrix_Zq : ByteString seedBytes -> PolyMatrix_Zq
 GenMatrix_Zq seed = matrix
     where
-        buf : ByteString (l * l * 256 / 8 * eq)
-        buf = xofBytes`{dBytes = l * l * 256 / 8 * eq} seed
+        buf    : ByteString (l * l * N * eq / 8)
+        buf    = SHAKE128::xofBytes`{dBytes = l * l * N * eq / 8} seed
 
-        coeffs : [l * l * 256] Zq
+        coeffs : [l * l * N] Zq
         coeffs = split`{each=eq} (join buf)
 
-        polys : [l * l] (Poly Zq)
-        polys = split `{each=256} coeffs
+        polys  : [l * l] Poly_Zq
+        polys  = split`{each=N} coeffs
+        
+        matrix : PolyMatrix_Zq
+        matrix = split`{parts=l} polys
 
-        matrix : PolyMatrix Zq
-        matrix = split `{each=l} polys
+// Sanity check GenMatrix properties
+// =================================
+// Output should always be an l x l matrix of l-coefficient polynomials
+property check_GenMatrix_dimensions (seed : ByteString 32) =
+    length (GenMatrix_Zq seed) == `l /\
+    and [ length row == `l | row <- GenMatrix_Zq seed ] /\
+    and [ length poly == `N | row <- GenMatrix_Zq seed, poly <- row ]
+// Different seeds should (almost always) produce different matrices
+// NOTE: This should NOT be called with `:prove`, as this isn't a guaranteed property
+//       Rather, `:check` should be run with a sufficiently set `:set tests` value (say, 100)
+//       where all 100 (or, in extremely rare cases, nearly all 100) tests pass successfully.
+property check_GenMatrix_distinct (seed1 : ByteString 32) (seed2 : ByteString 32) =
+    seed1 != seed2 ==> GenMatrix_Zq seed1 != GenMatrix_Zq seed2
 
-property GenMatrix_ZqProperty (seedBytes : ByteString 32) =
-    GenMatrix_Zq seedBytes ==
-      split`{each=l}
-        (split`{each=256}
-            (split`{each=eq}
-            (join (xofBytes`{dBytes = l * l * 256 / 8 * eq} seedBytes))))
 
-exampleSeed32 : ByteString 32
-exampleSeed32 = [ fromInteger i | i <- [0 .. 31] ]
-
-property GenMatrix_ZqExample =
-        GenMatrix_Zq exampleSeed32 ==
-            split`{each=l}
-                (split`{each=256}
-                    (split`{each=eq}
-                        (join (xofBytes`{dBytes = l * l * 256 / 8 * eq} exampleSeed32))))
 
 /**
  * Generate the Saber secret vector over `Zq` from a noise seed using
  * SHAKE-128.
  *
- * The expanded output is split into `mu`-bit chunks, each chunk is split into
- * two `mu/2` halves, and every coefficient is formed as the difference of
- * Hamming weights of those halves (interpreted in `Zq`).
+ * 1. The expanded output is split into `mu`-bit chunks
+ * 2. Each chunk is split into two `mu/2` halves 
+ * 3. Every coefficient is formed as the difference of Hamming weights of those halves (interpreted in `Zq`).
  */
-
 GenSecret_Zq : ByteString noiseSeedBytes -> PolyVec_Zq
 GenSecret_Zq seed = vector
     where
-        buf : ByteString (l * 256 / 8 * mu)
-        buf = xofBytes`{dBytes = l * 256 / 8 * mu} seed
+        buf : ByteString (l * N * mu / 8)
+        buf = SHAKE128::xofBytes`{dBytes = l * N * mu / 8} seed
 
-        pairs : [l * 256] [2] [mu / 2]
-        pairs = map split`{parts=2} (split`{each=mu} (join buf))
+        pairs : [l * N] [2][mu / 2]
+        pairs = map (split`{parts=2}) (split`{each=mu} (join buf))
 
-        secretCoeffs : [l * 256] Zq
-        secretCoeffs = [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq | k <- pairs ]
+        secretCoeffs : [l * N] Zq
+        secretCoeffs = [ fromInteger (HammingWeight (k @ 0) - HammingWeight (k @ 1)) | k <- pairs ]
 
-        vector : PolyVec Zq
-        vector = split`{parts = l} secretCoeffs
+        vector : PolyVec_Zq
+        vector = split`{parts=l} secretCoeffs
 
-property GenSecret_ZqExample =
-        GenSecret_Zq exampleSeed32 ==
-            split`{parts=l}
-                [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq
-                | k <- map split`{parts=2}
-                                 (split`{each=mu}
-                                     (join (xofBytes`{dBytes = l * 256 / 8 * mu} exampleSeed32)))
-                ]
-
-property GenSecret_ZqProperty (noiseSeed : ByteString noiseSeedBytes) =
-        GenSecret_Zq noiseSeed ==
-            split`{parts=l}
-                [ fromInteger (HammingWeight4 (k @ 0) - HammingWeight4 (k @ 1)) : Zq
-                | k <- map split`{parts=2}
-                                 (split`{each=mu}
-                                     (join (xofBytes`{dBytes = l * 256 / 8 * mu} noiseSeed)))
-                ]
+// Sanity check GenSecret properties
+// =================================
+// Coefficients should be bounded by mu/2 in absolute value
+// i.e. when interpreted as integers they should be small
+// NOTE: This, as with the GenMatrix property, should be run with `:check` instead of
+//       `:prove`.
+property check_GenSecret_bounded (seed : ByteString 32) =
+    and [ c <= `(mu/2) \/ c >= `(2^^eq - mu/2)
+        | row <- GenSecret_Zq seed
+        , c   <- row ]
