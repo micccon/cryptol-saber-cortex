@@ -1,0 +1,13 @@
+# I always use LLVM, but we can change if needed
+BasedOnStyle: LLVM
+
+# 4 spaces per indent (standard C, but could do 2 or 3 as well)
+IndentWidth: 4
+
+# Spaces only, no tabs
+UseTab: Never
+
+# K&R / 1TBS brace style — opening brace on same line as control statement
+#         e.g. if (condition) {
+# (this is personal pref)
+BreakBeforeBraces: Attach
