@@ -1,4 +1,4 @@
-/**
+/*
  * Higher-level arithmetic operations over polynomial vectors and matrices.
  *
  * Declares the following functions, corresponding to algorithms in
@@ -9,7 +9,7 @@
  *   - InnerProd:       computes the inner product of two vectors in R_p
  * (Algorithm 14)
  *
- * Depends on: params.h, types.h, poly.h, fips202.h
+ * Depends on: params.h, types.h, poly.h, third_party/fips202.h
  */
 
 #ifndef ARITHMETIC_H

@@ -1,4 +1,4 @@
-/**
+/*
  * All constants used in Saber implementations (of varying security levels), per
  * Section 8.1 (Implementation Constants) of the Round 3 Saber Specification.
  *

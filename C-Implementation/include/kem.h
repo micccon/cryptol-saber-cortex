@@ -1,4 +1,4 @@
-/**
+/*
  * The Saber IND-CCA2 key encapsulation mechanism (KEM).
  *
  * Declares the three KEM functions corresponding to Section 8.5
@@ -8,7 +8,7 @@
  *   - KEM_Decaps:  decapsulates a ciphertext to recover the session key
  * (Algorithm 22)
  *
- * Depends on: params.h, types.h, indcpa.h, fips202.h
+ * Depends on: params.h, types.h, indcpa.h, third_party/fips202.h
  */
 
 #ifndef KEM_H

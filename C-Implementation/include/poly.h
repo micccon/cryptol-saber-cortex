@@ -1,4 +1,4 @@
-/**
+/*
  * Polynomial arithmetic over the ring R_q = Z_q[x] / (x^256 + 1).
  *
  * Declares functions for polynomial multiplication (PolyMul) and

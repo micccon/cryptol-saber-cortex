@@ -1,4 +1,4 @@
-/**
+/*
  * The Saber IND-CPA public-key encryption scheme.
  *
  * Declares the three PKE functions corresponding to Section 8.4
@@ -10,7 +10,8 @@
  * This scheme is not directly used by callers — it serves as the
  * underlying primitive for the IND-CCA KEM declared in kem.h.
  *
- * Depends on: params.h, types.h, arithmetic.h, pack_unpack.h, fips202.h
+ * Depends on: params.h, types.h, arithmetic.h, pack_unpack.h,
+ * third_party/fips202.h
  */
 
 #ifndef INDCPA_H

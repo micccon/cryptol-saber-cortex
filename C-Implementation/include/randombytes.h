@@ -1,4 +1,4 @@
-/**
+/*
  * Interface for the random byte generation required by Saber key generation and
  * encapsulation.
  *

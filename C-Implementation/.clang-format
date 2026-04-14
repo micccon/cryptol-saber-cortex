@@ -11,6 +11,3 @@ UseTab: Never
 #         e.g. if (condition) {
 # (this is personal pref)
 BreakBeforeBraces: Attach
-
-# Group system includes separately from user-defined includes
-IncludeBlocks: Regroup

@@ -1,4 +1,4 @@
-/**
+/*
  * The serialization and deserialization of polynomial and vector types.
  *
  * Declares functions for converting between in-memory polynomial
