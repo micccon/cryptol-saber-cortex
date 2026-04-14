@@ -31,7 +31,9 @@
 #   define SABER_MU  8
 #endif
  
-// Shared across all parameter sets
+/* 
+ * SHARED ACROSS ALL PARAMETER SETS
+ */
 #define SABER_N               256
 #define SABER_EQ              13
 #define SABER_EP              10
@@ -40,11 +42,18 @@
 #define SABER_KEYBYTES        32
 #define SABER_HASHBYTES       32
 
-// Derived sizes
+/* 
+ * DERIVED SIZES
+ */
+// Size of a ByteString corresponding to a packed Zq polynomial
 #define SABER_POLYBYTES              ((SABER_EQ * SABER_N) / 8)
+// Size of a ByteString corresponding to a packed Zp polynomial
 #define SABER_POLYCOMPRESSEDBYTES    ((SABER_EP * SABER_N) / 8)
+// Size of a ByteString corresponding to a packed vector of Zq polynomials
 #define SABER_POLYVECBYTES           (SABER_L * SABER_POLYBYTES)
+// Size of a ByteString corresponding to a packed vector of Zp polynomials
 #define SABER_POLYVECCOMPRESSEDBYTES (SABER_L * SABER_POLYCOMPRESSEDBYTES)
+// Size of a ByteString corresponding to a packed Zt polynomial
 #define SABER_SCALEBYTES_KEM         ((SABER_ET * SABER_N) / 8)
 
 #define SABER_INDCPA_PUBLICKEYBYTES  (SABER_SEEDBYTES + SABER_POLYVECCOMPRESSEDBYTES)
