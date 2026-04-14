@@ -14,4 +14,12 @@
 #ifndef RANDOMBYTES_H
 #define RANDOMBYTES_H
 
+#include <stdint.h>
+
+void randombytes_init(uint8_t entropy_input[48],
+                      uint8_t personalization_string[48],
+                      int security_strength);
+
+int randombytes(uint8_t *x, unsigned long long xlen);
+
 #endif
