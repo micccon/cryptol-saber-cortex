@@ -1,7 +1,6 @@
 /**
- * This file to contain all constants used in Saber implementations
- * (of varying security levels), per Section 8.1 (Implementation Constants)
- * of the Round 3 Saber Specification.
+ * All constants used in Saber implementations (of varying security levels), per
+ * Section 8.1 (Implementation Constants) of the Round 3 Saber Specification.
  *
  * Select parameter set by defining one of these at compile time:
  *   make SABER_PARAMS=LightSaber
@@ -42,11 +41,11 @@
 #define SABER_HASHBYTES       32
 
 // Derived sizes
-#define SABER_POLYBYTES             ((SABER_EQ * SABER_N) / 8)
-#define SABER_POLYCOMPRESSEDBYTES   ((SABER_EP * SABER_N) / 8)
-#define SABER_POLYVECBYTES          (SABER_L * SABER_POLYBYTES)
+#define SABER_POLYBYTES              ((SABER_EQ * SABER_N) / 8)
+#define SABER_POLYCOMPRESSEDBYTES    ((SABER_EP * SABER_N) / 8)
+#define SABER_POLYVECBYTES           (SABER_L * SABER_POLYBYTES)
 #define SABER_POLYVECCOMPRESSEDBYTES (SABER_L * SABER_POLYCOMPRESSEDBYTES)
-#define SABER_SCALEBYTES_KEM        ((SABER_ET * SABER_N) / 8)
+#define SABER_SCALEBYTES_KEM         ((SABER_ET * SABER_N) / 8)
 
 #define SABER_INDCPA_PUBLICKEYBYTES  (SABER_SEEDBYTES + SABER_POLYVECCOMPRESSEDBYTES)
 #define SABER_INDCPA_SECRETKEYBYTES  (SABER_POLYVECBYTES)
