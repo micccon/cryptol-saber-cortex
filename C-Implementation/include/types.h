@@ -46,17 +46,18 @@ typedef uint16_t Z2;
 #define MASK_Zt ((1U << SABER_ET) - 1) // Varies based on et (security level)
 #define MASK_Z2 0x1U                   // 1 bit
 
-//
+// Various polynomial types, per coefficient type
 typedef Zq Poly_Zq[SABER_N];
 typedef Zp Poly_Zp[SABER_N];
 typedef Zt Poly_Zt[SABER_N];
 typedef Z2 Poly_Z2[SABER_N];
 
-//
+// Various vector types, per polynomial type (SABER only uses vectors of Zp and
+// Zq)
 typedef Poly_Zq PolyVec_Zq[SABER_L];
 typedef Poly_Zp PolyVec_Zp[SABER_L];
 
-//
+// Only matrix type that SABER uses.
 typedef Poly_Zq PolyMatrix_Zq[SABER_L][SABER_L];
 
 #endif

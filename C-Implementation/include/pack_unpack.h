@@ -2,10 +2,10 @@
  * The serialization and deserialization of polynomial and vector types.
  *
  * Declares functions for converting between in-memory polynomial
- * representations and packed byte strings, for each of the moduli
- * used in Saber (Zq, Zp, Zt, Z2). These functions define this
- * implementation's byte-level wire format for public keys, secret
- * keys, and ciphertexts.
+ * representations and packed byte strings, only for the moduli actually
+ * used in Saber (i.e., only the useful conversions). These functions define
+ * this implementation's byte-level wire format for public keys, secret keys,
+ * and ciphertexts.
  *
  * See Sections 8.2.4 and 8.2.7 of the Round 3 Saber specification
  * for the data conversion algorithms (BS2POL, POL2BS, etc.) that
@@ -16,5 +16,8 @@
 
 #ifndef PACK_UNPACK_H
 #define PACK_UNPACK_H
+
+#include "params.h"
+#include "types.h"
 
 #endif
