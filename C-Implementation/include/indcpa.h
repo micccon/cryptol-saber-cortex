@@ -46,7 +46,7 @@ uint8_t *PKE_Enc(uint8_t *m, uint8_t *seed_s, pk_t *pk);
 
 /**
  * Decrypt a ciphertext ct with a secret key sk
- * 
+ *
  * @param ct ciphertext to decrypt - byte string
  * @param sk secret key to use to encrypt
  *

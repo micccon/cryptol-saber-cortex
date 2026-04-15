@@ -28,21 +28,17 @@
  * @param b Input polynomial in R_q (Poly_Zq)
  * @param result Output buffer for the resulting polynomial in R_q (Poly_Zq)
  */
-void poly_mul_negacyclic_zq(const Poly_Zq a,
-                            const Poly_Zq b,
-                            Poly_Zq result);
+void poly_mul_negacyclic_zq(const Poly_Zq a, const Poly_Zq b, Poly_Zq result);
 
 /*
  * Negacyclic polynomial multiplication in R_p = Z_p[x] / (x^N + 1).
  * Computes:
  *     result = a * b mod (x^SABER_N + 1)
- * 
+ *
  * @param a Input polynomial in R_p (Poly_Zp)
  * @param b Input polynomial in R_p (Poly_Zp)
  * @param result Output buffer for the resulting polynomial in R_p (Poly_Zp)
  */
-void poly_mul_negacyclic_zp(const Poly_Zp a,
-                            const Poly_Zp b,
-                            Poly_Zp result);
+void poly_mul_negacyclic_zp(const Poly_Zp a, const Poly_Zp b, Poly_Zp result);
 
 #endif
