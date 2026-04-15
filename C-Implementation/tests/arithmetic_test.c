@@ -127,12 +127,96 @@ static int check_inner_prod(void) {
     return 0;
 }
 
+static int check_matrix_vector_mul(void) {
+    PolyMatrix_Zq M = {0};
+    PolyVec_Zq v = {0};
+    PolyVec_Zq result;
+    size_t i;
+    size_t k;
+    static const PolyVec_Zq expected = {
+        {
+            [0] = 10,
+            [1] = 8141,
+            [2] = 37,
+            [3] = 8138,
+            [4] = 28,
+            [6] = 30,
+            [255] = 60
+        },
+        {
+            [1] = 17,
+            [2] = 40,
+            [3] = 166,
+            [4] = 44,
+            [5] = 177,
+            [7] = 108
+        },
+        {
+            [0] = 60,
+            [1] = 70,
+            [2] = 153,
+            [3] = 77,
+            [4] = 162,
+            [5] = 104,
+            [7] = 112,
+            [9] = 120
+        }
+    };
+
+    M[0][0][0] = 1;
+    M[0][1][1] = 2;
+    M[0][2][SABER_N - 1] = 3;
+    M[1][0][2] = 4;
+    M[1][1][0] = 5;
+    M[1][2][3] = 6;
+    M[2][0][1] = 7;
+    M[2][1][4] = 8;
+    M[2][2][0] = 9;
+
+    v[0][0] = 10;
+    v[0][2] = 11;
+    v[0][SABER_N - 1] = 12;
+    v[1][1] = 13;
+    v[1][3] = 14;
+    v[1][5] = 15;
+    v[2][0] = 16;
+    v[2][2] = 17;
+    v[2][4] = 18;
+
+    for (i = 0; i < SABER_L; ++i) {
+        for (k = 0; k < SABER_N; ++k) {
+            result[i][k] = 99;
+        }
+    }
+
+    matrix_vector_mul(M, v, result);
+
+    for (i = 0; i < SABER_L; ++i) {
+        for (k = 0; k < SABER_N; ++k) {
+            if (result[i][k] != expected[i][k]) {
+                printf("matrix_vector_mul failed at [%zu][%zu]: got %u, expected %u\n",
+                       i,
+                       k,
+                       (unsigned)result[i][k],
+                       (unsigned)expected[i][k]);
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
 int main(void) {
     if (check_gen_matrix() != 0) {
         return 1;
     }
 
     if (check_inner_prod() != 0) {
+        return 1;
+    }
+
+    if (check_matrix_vector_mul() != 0) {
         return 1;
     }
 
