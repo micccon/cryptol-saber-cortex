@@ -165,7 +165,7 @@ static void POLq2BS(const Poly_Zq input_poly, uint8_t output_bytes[SABER_POLYBYT
  *
  * Inverse of POLq2BS. Each coefficient is masked to SABER_EQ = 13 bits.
  */
-static void BS2POLq(Poly_Zq output_poly, const uint8_t input_bytes[SABER_POLYBYTES]) {
+void BS2POLq(Poly_Zq output_poly, const uint8_t input_bytes[SABER_POLYBYTES]) {
     // Extract eight coefficients from 13 bytes at a time
     for (size_t i = 0; i < SABER_N / 8; ++i) {
         // Extract the eight Zq coefficients

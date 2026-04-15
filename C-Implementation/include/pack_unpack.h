@@ -32,6 +32,13 @@ void POLT2BS(const Poly_Zt input_poly, uint8_t output_bytes[SABER_SCALEBYTES_KEM
 void BS2POLT(Poly_Zt output_poly, const uint8_t input_bytes[SABER_SCALEBYTES_KEM]);
 
 /*
+ * Conversion for unpacking a ByteString into a Zq Polynomial.
+ * 
+ * Used in GenMatrix.
+ */
+void BS2POLq(Poly_Zq output_poly, const uint8_t input_bytes[SABER_POLYBYTES]);
+
+/*
  * Conversions for going from vectors of Zq Polynomials to ByteStrings, and vice
  * versa.
  *
