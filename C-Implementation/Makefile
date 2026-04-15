@@ -2,13 +2,13 @@ CC ?= cc
 CFLAGS ?= -Wall -Wextra -Wpedantic -std=c11
 
 # Include project headers from C-Implementation/include.
-INCLUDES = -Iinclude
+INCLUDES = -I"include/"
 # Place all built test binaries under build/.
 BUILD_DIR = build
 
 # List each test by the basename of its file in tests/.
 # Example: tests/randombytes_test.c -> randombytes_test
-TEST_NAMES = randombytes_test
+TEST_NAMES = randombytes_test pack_unpack_test
 
 # Sources linked into every test binary.
 COMMON_TEST_SRCS = \
@@ -19,6 +19,9 @@ COMMON_TEST_SRCS = \
 randombytes_test_SRCS = \
 	src/randombytes.c \
 	third_party/AES/WjCryptLib_Aes.c
+
+pack_unpack_test_SRCS = \
+	src/pack_unpack.c
 
 TEST_BINS = $(addprefix $(BUILD_DIR)/,$(TEST_NAMES))
 
