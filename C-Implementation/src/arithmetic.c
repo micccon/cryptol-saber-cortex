@@ -21,6 +21,22 @@ void gen_matrix(const uint8_t seed[SABER_SEEDBYTES], PolyMatrix_Zq result) {
     }
 }
 
+void gen_secret(const uint8_t seed[SABER_NOISE_SEEDBYTES], PolyVec_Zq result) {
+    uint8_t buf[] = malloc(SABER_L * SABER_N * (SABER_MU / 8));
+    result = malloc(sizeof(PolyVec_Zq));
+
+    shake128(buf, sizeof(buf), seed, SABER_NOISE_SEEDBYTES);
+
+    int k = 0;
+    for (int i = 0; i < SABER_L; i++) {
+        for (int j = 0; j < SABER_N; j++) {
+            // hamming weight
+            k += 2;
+        }
+    }
+    return;
+}
+
 void inner_prod(PolyVec_Zp a, PolyVec_Zp b, Poly_Zp result) {
     Poly_Zp product;
 
