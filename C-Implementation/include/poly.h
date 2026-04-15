@@ -28,9 +28,7 @@
  * Coefficients are represented as Zq values, with the caller responsible
  * for applying any required masking/reduction policy after multiplication.
  */
-void poly_mul_negacyclic_zq(const Poly_Zq a,
-                            const Poly_Zq b,
-                            Poly_Zq result);
+void poly_mul_negacyclic_zq(const Poly_Zq a, const Poly_Zq b, Poly_Zq result);
 
 /*
  * Negacyclic polynomial multiply-accumulate in R_q.
@@ -41,9 +39,7 @@ void poly_mul_negacyclic_zq(const Poly_Zq a,
  * This is useful for matrix-vector and inner-product style routines where
  * several polynomial products are summed into the same output polynomial.
  */
-void poly_mul_accumulate_zq(const Poly_Zq a,
-                            const Poly_Zq b,
-                            Poly_Zq acc);
+void poly_mul_accumulate_zq(const Poly_Zq a, const Poly_Zq b, Poly_Zq acc);
 
 /*
  * Negacyclic polynomial multiplication in R_p = Z_p[x] / (x^N + 1).
@@ -51,9 +47,7 @@ void poly_mul_accumulate_zq(const Poly_Zq a,
  * Computes:
  *     result = a * b mod (x^SABER_N + 1)
  */
-void poly_mul_negacyclic_zp(const Poly_Zp a,
-                            const Poly_Zp b,
-                            Poly_Zp result);
+void poly_mul_negacyclic_zp(const Poly_Zp a, const Poly_Zp b, Poly_Zp result);
 
 /*
  * Negacyclic polynomial multiply-accumulate in R_p.
@@ -61,8 +55,6 @@ void poly_mul_negacyclic_zp(const Poly_Zp a,
  * Computes:
  *     acc = acc + (a * b) mod (x^SABER_N + 1)
  */
-void poly_mul_accumulate_zp(const Poly_Zp a,
-                            const Poly_Zp b,
-                            Poly_Zp acc);
+void poly_mul_accumulate_zp(const Poly_Zp a, const Poly_Zp b, Poly_Zp acc);
 
 #endif

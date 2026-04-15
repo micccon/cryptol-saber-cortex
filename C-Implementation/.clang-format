@@ -11,3 +11,11 @@ UseTab: Never
 #         e.g. if (condition) {
 # (this is personal pref)
 BreakBeforeBraces: Attach
+
+# Maximum line width before clang-format wraps — default is 80, but 
+# it's nice to have it a little wider for inline comments where necessary
+ColumnLimit: 120
+
+# Always insert a newline at the end of the file 
+# (helps eliminate compiler warnings from headers w/out trailing newlines)
+InsertNewlineAtEOF: true
