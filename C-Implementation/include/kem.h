@@ -18,29 +18,20 @@
 
 #include "params.h"
 #include "indcpa.h"
-
-/*
- * Public key wrapper for the KEM.
- *
- * The IND-CCA public key has the same serialized layout as the IND-CPA
- * public key, so we keep the same shape here.
- */
-typedef struct {
-    uint8_t seed_a[SABER_SEEDBYTES];
-    uint8_t pk[SABER_PUBLICKEYBYTES - SABER_SEEDBYTES];
-} kem_pk_t;
+#include "types.h"
+#include "../third_party/fips202.h"
 
 /*
  * Secret key wrapper for the KEM.
  *
- * The secret key stores the IND-CPA secret key, the public key, H(pk),
- * and the fallback secret value z.
+ * Algorithm 20 stores the secret key as:
+ *   z || H(pk) || PublicKeycpa || SecretKeycpa
  */
 typedef struct {
-    uint8_t indcpa_sk[SABER_INDCPA_SECRETKEYBYTES];
-    kem_pk_t pk;
-    uint8_t hash_pk[SABER_HASHBYTES];
     uint8_t z[SABER_KEYBYTES];
+    uint8_t hash_pk[SABER_HASHBYTES];
+    pk_t pk;
+    uint8_t indcpa_sk[SABER_INDCPA_SECRETKEYBYTES];
 } kem_sk_t;
 
 /*
@@ -48,25 +39,25 @@ typedef struct {
  */
 typedef struct {
     uint8_t bytes[SABER_BYTES_CCA_DEC];
-} kem_ct_t;
+} ct_t;
 
 /*
  * Generates a KEM public/secret key pair (Algorithm 20).
  */
-void KEM_KeyGen(kem_pk_t *pk, kem_sk_t *sk);
+void KEM_KeyGen(pk_t *pk, kem_sk_t *sk);
 
 /*
  * Encapsulates a shared secret under the given public key (Algorithm 21).
  */
-void KEM_Encaps(const kem_pk_t *pk,
-                kem_ct_t *ct,
-                uint8_t key[SABER_KEYBYTES]);
+void KEM_Encaps(pk_t *pk,
+                uint8_t key[SABER_KEYBYTES],
+                ct_t *ct);
 
 /*
  * Decapsulates a ciphertext to recover the shared secret (Algorithm 22).
  */
-void KEM_Decaps(const kem_ct_t *ct,
-                const kem_sk_t *sk,
+void KEM_Decaps(ct_t *ct,
+                kem_sk_t *sk,
                 uint8_t key[SABER_KEYBYTES]);
 
 #endif

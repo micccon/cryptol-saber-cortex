@@ -28,3 +28,22 @@ uint32_t hamming_weight(uint8_t bytes[], uint32_t size) {
 
     return result;
 }
+
+int verify(const uint8_t *a, const uint8_t *b, size_t size) {
+    uint64_t diff = 0;
+
+    for (size_t i = 0; i < size; ++i) {
+        diff |= a[i] ^ b[i];
+    }
+
+    diff = (uint64_t)(-(int64_t)diff) >> 63;
+    return (int)diff;
+}
+
+void cmov(uint8_t *dst, const uint8_t *src, size_t size, uint8_t b) {
+    b = (uint8_t)(-((int)b));
+
+    for (size_t i = 0; i < size; ++i) {
+        dst[i] ^= b & (src[i] ^ dst[i]);
+    }
+}
