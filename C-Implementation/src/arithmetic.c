@@ -1,5 +1,6 @@
 // Implementation of declarations in 'arithmetic.h'
 #include "arithmetic.h"
+#include "helpers.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -22,15 +23,16 @@ void gen_matrix(const uint8_t seed[SABER_SEEDBYTES], PolyMatrix_Zq result) {
 }
 
 void gen_secret(const uint8_t seed[SABER_NOISE_SEEDBYTES], PolyVec_Zq result) {
-    uint8_t buf[] = malloc(SABER_L * SABER_N * (SABER_MU / 8));
-    result = malloc(sizeof(PolyVec_Zq));
-
+    uint8_t buf[SABER_L * SABER_N * SABER_MU / 8];
     shake128(buf, sizeof(buf), seed, SABER_NOISE_SEEDBYTES);
+    uint8_t unpacked_buf[2 * SABER_L * SABER_N];
+    unpack_bit_string(buf, unpacked_buf, sizeof(unpacked_buf), SABER_MU / 2);
 
     int k = 0;
     for (int i = 0; i < SABER_L; i++) {
         for (int j = 0; j < SABER_N; j++) {
-            // hamming weight
+            result[i][j] =
+                hamming_weight(&unpacked_buf[k], SABER_MU / 2) - hamming_weight(&unpacked_buf[k + 1], SABER_MU / 2);
             k += 2;
         }
     }
