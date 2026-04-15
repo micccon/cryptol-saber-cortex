@@ -9,9 +9,9 @@
 // Point to your tivaware local installation here if you want to use the hardware AES engine for testing
 // Otherwise, the host-side fallback will be used.
 #if defined(SABER_USE_TIVAWARE_AES)
-#include "../../TivaWare_C_Series-2.2.0.295/inc/hw_memmap.h"
-#include "../../TivaWare_C_Series-2.2.0.295/driverlib/aes.h"
-#include "../../TivaWare_C_Series-2.2.0.295/driverlib/sysctl.h"
+#include "hw_memmap.h"
+#include "aes.h"
+#include "sysctl.h"
 #else
 #include "../third_party/AES/WjCryptLib_Aes.h"
 #endif
