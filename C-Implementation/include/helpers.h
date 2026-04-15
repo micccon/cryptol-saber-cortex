@@ -18,4 +18,12 @@ uint32_t load32_le(const uint8_t bytes[4]);
  */
 void store32_le(uint8_t bytes[4], uint32_t word);
 
+/**
+ * Calculates the hamming weight of a bit string represented as a byte array.
+ * 
+ * @param bytes Input array for calculating the hamming weight
+ * @param size Length of input bytes array in bytes
+ */
+uint32_t hamming_weight(uint8_t bytes[], uint32_t size);
+
 #endif
