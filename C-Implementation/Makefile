@@ -8,7 +8,7 @@ BUILD_DIR = build
 
 # List each test by the basename of its file in tests/.
 # Example: tests/randombytes_test.c -> randombytes_test
-TEST_NAMES = randombytes_test poly_test pack_unpack_test
+TEST_NAMES = randombytes_test poly_test pack_unpack_test arithmetic_test
 
 # Sources linked into every test binary.
 COMMON_TEST_SRCS = \
@@ -24,6 +24,11 @@ pack_unpack_test_SRCS = \
 	src/pack_unpack.c
 poly_test_SRCS = \
 	src/poly.c
+arithmetic_test_SRCS = \
+	src/arithmetic.c \
+	src/poly.c \
+	src/pack_unpack.c \
+	third_party/fips202.c
 
 TEST_BINS = $(addprefix $(BUILD_DIR)/,$(TEST_NAMES))
 

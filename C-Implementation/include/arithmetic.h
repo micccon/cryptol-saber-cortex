@@ -19,6 +19,7 @@
 #include "types.h"
 #include "poly.h"
 #include "../third_party/fips202.h"
+#include "pack_unpack.h"
 
 /**
  * High-level arithmetic operations over polynomial vectors and matrices.
@@ -43,7 +44,7 @@ void gen_secret(const uint8_t seed[SABER_NOISE_SEEDBYTES], PolyVec_Zq result);
  * @param v Input vector (PolyVec_Zq)
  * @param result Output buffer for the resulting vector (PolyVec_Zq)
  */
-void matrix_vector_mul(const PolyMatrix_Zq M, const PolyVec_Zq v, PolyVec_Zq result);
+void matrix_vector_mul(PolyMatrix_Zq M, PolyVec_Zq v, PolyVec_Zq result);
 
 /**
  * Computes the inner product of two vectors in R_p, producing a polynomial in R_p.
@@ -52,6 +53,6 @@ void matrix_vector_mul(const PolyMatrix_Zq M, const PolyVec_Zq v, PolyVec_Zq res
  * @param b Input vector (PolyVec_Zp)
  * @param result Output buffer for the resulting polynomial (Poly_Zp)
  */
-void inner_prod(const PolyVec_Zp a, const PolyVec_Zp b, Poly_Zp result);
+void inner_prod(PolyVec_Zp a, PolyVec_Zp b, Poly_Zp result);
 
 #endif
