@@ -18,12 +18,38 @@
 #define INDCPA_H
 
 #include "params.h"
+#include "types.h"
+#include "arithmetic.h"
+#include "helpers.h"
+#include "pack_unpack.h"
+#include "randombytes.h"
 #include <stdint.h>
 
+#define H1 (1U << (SABER_EQ - SABER_EP - 1))
+#define H2 ((1U << (SABER_EP - 2)) - (1U << (SABER_EP - SABER_ET - 1)) + H1)
+#define H3 (1U << (SABER_EP - SABER_ET - 1))
+
+/*
+ * IND-CPA public key stored as seedA || b'.
+ */
 typedef struct {
     uint8_t seed_a[SABER_SEEDBYTES];
     uint8_t pk[SABER_PUBLICKEYBYTES - SABER_SEEDBYTES];
 } pk_t;
+
+/*
+ * IND-CPA secret key stored as the packed secret vector s.
+ */
+typedef struct {
+    uint8_t sk[SABER_INDCPA_SECRETKEYBYTES];
+} pke_sk_t;
+
+/*
+ * IND-CPA / KEM ciphertext stored in its packed byte-string form.
+ */
+typedef struct {
+    uint8_t bytes[SABER_BYTES_CCA_DEC];
+} ct_t;
 
 /**
  * Generates a random public/secret keypair (Algorithm 17)
@@ -31,27 +57,41 @@ typedef struct {
  * @param pk empty pk struct (byte string array of SABER_INDCPA_PUBKEYBYTES)
  * @param sk empty byte string array of SABER_INDCPA_SECRETKEYBYTES
  */
-void PKE_KeyGen(pk_t *pk, uint8_t *sk);
+void PKE_KeyGen(pk_t *pk, pke_sk_t *sk);
+
+/**
+ * Deterministic variant of PKE_KeyGen used for tests/KATs.
+ *
+ * @param pk output public key
+ * @param sk output secret key
+ * @param seed_a seed used to derive the public matrix
+ * @param seed_s seed used to derive the secret vector
+ */
+void PKE_KeyGen_Deterministic(pk_t *pk,
+                              pke_sk_t *sk,
+                              uint8_t seed_a[SABER_SEEDBYTES],
+                              uint8_t seed_s[SABER_NOISE_SEEDBYTES]);
 
 /**
  * Encrypt a message m with a public key (Algorithm 18)
  *
  * @param m message to encrypt - 256 bit string
- * @param seed_s randome byte string of SABER_SEEDBYTES
+ * @param seed_s random byte string of SABER_NOISE_SEEDBYTES
  * @param pk public key byte string to use to encrypt
- *
- * @return ciphertext byte string
+ * @param ct empty ct struct to hold the ciphertext
  */
-uint8_t *PKE_Enc(uint8_t *m, uint8_t *seed_s, pk_t *pk);
+void PKE_Enc(uint8_t m[SABER_KEYBYTES],
+                uint8_t seed_s[SABER_NOISE_SEEDBYTES],
+                pk_t *pk,
+                ct_t *ct);
 
 /**
  * Decrypt a ciphertext ct with a secret key sk
  *
  * @param ct ciphertext to decrypt - byte string
  * @param sk secret key to use to encrypt
- *
- * @return 256 bit string message
+ * @param m empty byte string array of SABER_KEYBYTES to hold the decrypted message
  */
-uint8_t *PKE_DEC(uint8_t *ct, uint8_t *sk);
+void PKE_Dec(ct_t *ct, pke_sk_t *sk, uint8_t m[SABER_KEYBYTES]);
 
 #endif

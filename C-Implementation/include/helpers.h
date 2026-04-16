@@ -1,6 +1,8 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include "types.h"
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -18,6 +20,14 @@ uint32_t load32_le(const uint8_t bytes[4]);
  * @param word 32-bit word to store
  */
 void store32_le(uint8_t bytes[4], uint32_t word);
+
+/**
+ * Computes the transpose of a polynomial matrix over Zq.
+ *
+ * @param input Input matrix
+ * @param result Output buffer for the transposed matrix
+ */
+void transpose_matrix(PolyMatrix_Zq input, PolyMatrix_Zq result);
 
 /**
  * Calculates the hamming weight of a bit string represented as a byte array.

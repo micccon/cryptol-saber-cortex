@@ -28,7 +28,7 @@
  * Used in PKE.Enc and PKE.Dec, see Sections 8.4.2 & 8.4.3 of the Round 3 Saber
  * specification
  */
-void POLT2BS(const Poly_Zt input_poly, uint8_t output_bytes[SABER_SCALEBYTES_KEM]);
+void POLT2BS(Poly_Zt input_poly, uint8_t output_bytes[SABER_SCALEBYTES_KEM]);
 void BS2POLT(Poly_Zt output_poly, const uint8_t input_bytes[SABER_SCALEBYTES_KEM]);
 
 /*
@@ -45,7 +45,7 @@ void BS2POLq(Poly_Zq output_poly, const uint8_t input_bytes[SABER_POLYBYTES]);
  * Used in PKE.KeyGen and PKE.Dec, see Sections 8.4.1 & 8.4.3 of the Round 3
  * Saber specification
  */
-void POLVECq2BS(const PolyVec_Zq input_vec, uint8_t output_bytes[SABER_POLYVECBYTES]);
+void POLVECq2BS(PolyVec_Zq input_vec, uint8_t output_bytes[SABER_POLYVECBYTES]);
 void BS2POLVECq(PolyVec_Zq output_vec, const uint8_t input_bytes[SABER_POLYVECBYTES]);
 
 /*
@@ -55,7 +55,7 @@ void BS2POLVECq(PolyVec_Zq output_vec, const uint8_t input_bytes[SABER_POLYVECBY
  * Used in PKE.KeyGen, PKE.Enc and PKE.Dec, see Sections 8.4.1 thru 8.4.3 of the
  * Round 3 Saber specification
  */
-void POLVECp2BS(const PolyVec_Zp input_vec, uint8_t output_bytes[SABER_POLYVECCOMPRESSEDBYTES]);
+void POLVECp2BS(PolyVec_Zp input_vec, uint8_t output_bytes[SABER_POLYVECCOMPRESSEDBYTES]);
 void BS2POLVECp(PolyVec_Zp output_vec, const uint8_t input_bytes[SABER_POLYVECCOMPRESSEDBYTES]);
 
 /*
@@ -64,7 +64,7 @@ void BS2POLVECp(PolyVec_Zp output_vec, const uint8_t input_bytes[SABER_POLYVECCO
  * Used in PKE.Enc and PKE.Dec, see Sections 8.4.2 & 8.4.3 of the Round 3 Saber
  * specification
  */
-void POLmsg2BS(const Poly_Z2 input_poly, uint8_t output_bytes[SABER_KEYBYTES]);
+void POLmsg2BS(Poly_Z2 input_poly, uint8_t output_bytes[SABER_KEYBYTES]);
 void BS2POLmsg(Poly_Z2 output_poly, const uint8_t input_bytes[SABER_KEYBYTES]);
 
 #endif

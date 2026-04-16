@@ -31,7 +31,7 @@
  * coefficients are packed into a single byte, low coefficient in the low
  * nibble.
  */
-void POLT2BS(const Poly_Zt input_poly, uint8_t output_bytes[SABER_SCALEBYTES_KEM]) {
+void POLT2BS(Poly_Zt input_poly, uint8_t output_bytes[SABER_SCALEBYTES_KEM]) {
     for (size_t i = 0; i < SABER_N / 2; ++i) {
         // Get first and second coefficients of the current pair
         uint8_t a = input_poly[2 * i] & MASK_Zt;
@@ -72,7 +72,7 @@ void BS2POLT(Poly_Zt output_poly, const uint8_t input_bytes[SABER_SCALEBYTES_KEM
  * Bit i of coefficient i is placed in bit (i % 8) of byte (i / 8),
  * LSB first.
  */
-void POLmsg2BS(const Poly_Z2 input_poly, uint8_t output_bytes[SABER_KEYBYTES]) {
+void POLmsg2BS(Poly_Z2 input_poly, uint8_t output_bytes[SABER_KEYBYTES]) {
     for (size_t i = 0; i < SABER_N / 8; ++i) {
         // First coefficient in LSB, second in next LSB, third in next LSB, etc.
         output_bytes[i] = (input_poly[8 * i + 0] << 0) | (input_poly[8 * i + 1] << 1) | (input_poly[8 * i + 2] << 2) |
@@ -123,7 +123,7 @@ void BS2POLmsg(Poly_Z2 output_poly, const uint8_t input_bytes[SABER_KEYBYTES]) {
 /*
  * POLq2BS — pack a Poly_Zq (256 13-bit coefficients) into a byte string.
  */
-static void POLq2BS(const Poly_Zq input_poly, uint8_t output_bytes[SABER_POLYBYTES]) {
+static void POLq2BS(Poly_Zq input_poly, uint8_t output_bytes[SABER_POLYBYTES]) {
     // Work thru poly in batches of 8 coefficients, to pack 13 bytes at a time
     for (size_t i = 0; i < SABER_N / 8; ++i) {
         // Gather eight coefficients (for readability)
@@ -205,7 +205,7 @@ void BS2POLq(Poly_Zq output_poly, const uint8_t input_bytes[SABER_POLYBYTES]) {
 /*
  * POLVECq2BS — pack a PolyVec_Zq into a byte string.
  */
-void POLVECq2BS(const PolyVec_Zq input_vec, uint8_t output_bytes[SABER_POLYVECBYTES]) {
+void POLVECq2BS(PolyVec_Zq input_vec, uint8_t output_bytes[SABER_POLYVECBYTES]) {
     // Pack in a poly-by-poly fashion thru the entire vector
     for (size_t i = 0; i < SABER_L; ++i)
         POLq2BS(input_vec[i], output_bytes + i * SABER_POLYBYTES);
@@ -234,7 +234,7 @@ void BS2POLVECq(PolyVec_Zq output_vec, const uint8_t input_bytes[SABER_POLYVECBY
 /*
  * POLp2BS — pack a Poly_Zp (256 10-bit coefficients) into a byte string.
  */
-static void POLp2BS(const Poly_Zp input_poly, uint8_t output_bytes[SABER_POLYCOMPRESSEDBYTES]) {
+static void POLp2BS(Poly_Zp input_poly, uint8_t output_bytes[SABER_POLYCOMPRESSEDBYTES]) {
     // Work thru poly in batches of 4 coefficients, to pack 5 bytes at a time
     for (size_t i = 0; i < SABER_N / 4; ++i) {
         // Gather four coefficients (for readability)
@@ -284,7 +284,7 @@ static void BS2POLp(Poly_Zp output_poly, const uint8_t input_bytes[SABER_POLYCOM
 /*
  * POLVECp2BS — pack a PolyVec_Zp into a byte string.
  */
-void POLVECp2BS(const PolyVec_Zp input_vec, uint8_t output_bytes[SABER_POLYVECCOMPRESSEDBYTES]) {
+void POLVECp2BS(PolyVec_Zp input_vec, uint8_t output_bytes[SABER_POLYVECCOMPRESSEDBYTES]) {
     // Pack in a poly-by-poly fashion thru the entire vector
     for (size_t i = 0; i < SABER_L; ++i)
         POLp2BS(input_vec[i], output_bytes + i * SABER_POLYCOMPRESSEDBYTES);

@@ -31,15 +31,8 @@ typedef struct {
     uint8_t z[SABER_KEYBYTES];
     uint8_t hash_pk[SABER_HASHBYTES];
     pk_t pk;
-    uint8_t indcpa_sk[SABER_INDCPA_SECRETKEYBYTES];
+    pke_sk_t indcpa_sk;
 } kem_sk_t;
-
-/*
- * Ciphertext wrapper for the KEM.
- */
-typedef struct {
-    uint8_t bytes[SABER_BYTES_CCA_DEC];
-} ct_t;
 
 /*
  * Generates a KEM public/secret key pair (Algorithm 20).
@@ -47,14 +40,42 @@ typedef struct {
 void KEM_KeyGen(pk_t *pk, kem_sk_t *sk);
 
 /*
- * Encapsulates a shared secret under the given public key (Algorithm 21).
+ * Deterministic variant of KEM_KeyGen used for tests/KATs.
+ *
+ * @param pk empty pk struct (byte string array of SABER_INDCPA_PUBKEYBYTES)
+ * @param sk empty kem_sk_t struct to hold the generated secret key
+ * @param seed_a random byte string of SABER_SEEDBYTES to use for public
+ *              matrix generation
+ * @param seed_s random byte string of SABER_NOISE_SEEDBYTES to use
+ *             for secret vector generation
+ * @param z random byte string of SABER_KEYBYTES to use for the 'z' value in
+ *         the secret key
+ */
+void KEM_KeyGen_Deterministic(pk_t *pk,
+                              kem_sk_t *sk,
+                              uint8_t seed_a[SABER_SEEDBYTES],
+                              uint8_t seed_s[SABER_NOISE_SEEDBYTES],
+                              uint8_t z[SABER_KEYBYTES]);
+
+/*
+ * Encapsulates a shared secret under the given public key (Algorithm 21)
+ *
+ * @param pk public key struct to encapsulate under
+ * @param key output buffer for the shared secret (byte string of SABER_KEYBYTES
+ *       bytes)
+ * @param ct output ciphertext struct to hold the encapsulated ciphertext
  */
 void KEM_Encaps(pk_t *pk,
                 uint8_t key[SABER_KEYBYTES],
                 ct_t *ct);
 
 /*
- * Decapsulates a ciphertext to recover the shared secret (Algorithm 22).
+ * Decapsulates a ciphertext to recover the shared secret (Algorithm 22)
+ *
+ * @param ct input ciphertext struct to decapsulate
+ * @param sk secret key struct to use for decapsulation
+ * @param key output buffer for the shared secret (byte string of SABER_KEYBYTES
+ *      bytes)
  */
 void KEM_Decaps(ct_t *ct,
                 kem_sk_t *sk,

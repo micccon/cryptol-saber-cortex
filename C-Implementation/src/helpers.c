@@ -1,5 +1,7 @@
 #include "helpers.h"
 
+#include <string.h>
+
 uint32_t load32_le(const uint8_t bytes[4]) {
     return ((uint32_t)bytes[0]) | ((uint32_t)bytes[1] << 8) | ((uint32_t)bytes[2] << 16) | ((uint32_t)bytes[3] << 24);
 }
@@ -9,6 +11,26 @@ void store32_le(uint8_t bytes[4], uint32_t word) {
     bytes[1] = (uint8_t)(word >> 8);
     bytes[2] = (uint8_t)(word >> 16);
     bytes[3] = (uint8_t)(word >> 24);
+}
+
+void shift_right_u16(uint16_t *output, const uint16_t *input, size_t count, uint8_t shift) {
+    for (size_t i = 0; i < count; ++i) {
+        output[i] = (uint16_t)(input[i] >> shift);
+    }
+}
+
+void shift_left_u16(uint16_t *output, const uint16_t *input, size_t count, uint8_t shift) {
+    for (size_t i = 0; i < count; ++i) {
+        output[i] = (uint16_t)(input[i] << shift);
+    }
+}
+
+void transpose_matrix(PolyMatrix_Zq input, PolyMatrix_Zq result) {
+    for (size_t i = 0; i < SABER_L; ++i) {
+        for (size_t j = 0; j < SABER_L; ++j) {
+            memcpy(result[i][j], input[j][i], sizeof(Poly_Zq));
+        }
+    }
 }
 
 int hamming_weight(uint8_t *bytes, uint32_t num_bits) {
