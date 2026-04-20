@@ -24,14 +24,14 @@
 /*
  * Secret key wrapper for the KEM.
  *
- * Algorithm 20 stores the secret key as:
- *   z || H(pk) || PublicKeycpa || SecretKeycpa
+ * Algorithm 20 stores the secret key byte string as:
+ *   SecretKeycpa || PublicKeycpa || H(pk) || z
  */
 typedef struct {
-    uint8_t z[SABER_KEYBYTES];
-    uint8_t hash_pk[SABER_HASHBYTES];
-    pk_t pk;
     pke_sk_t indcpa_sk;
+    pk_t pk;
+    uint8_t hash_pk[SABER_HASHBYTES];
+    uint8_t z[SABER_KEYBYTES];
 } kem_sk_t;
 
 /*
@@ -42,7 +42,7 @@ void KEM_KeyGen(pk_t *pk, kem_sk_t *sk);
 /*
  * Deterministic variant of KEM_KeyGen used for tests/KATs.
  *
- * @param pk empty pk struct (byte string array of SABER_INDCPA_PUBKEYBYTES)
+ * @param pk empty pk struct storing the IND-CPA public key as b || seed_A
  * @param sk empty kem_sk_t struct to hold the generated secret key
  * @param seed_a random byte string of SABER_SEEDBYTES to use for public
  *              matrix generation

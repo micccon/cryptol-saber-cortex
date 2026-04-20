@@ -47,9 +47,19 @@ kem_test_SRCS = \
 	third_party/fips202.c \
 	third_party/AES/WjCryptLib_Aes.c
 
+kats_test_SRCS = \
+	src/kem.c \
+	src/indcpa.c \
+	src/arithmetic.c \
+	src/poly.c \
+	src/pack_unpack.c \
+	src/randombytes.c \
+	third_party/fips202.c \
+	third_party/AES/WjCryptLib_Aes.c
+
 TEST_BINS = $(addprefix $(BUILD_DIR)/,$(TEST_NAMES))
 
-.PHONY: all clean test run $(addprefix test-,$(TEST_NAMES)) $(addprefix run-,$(TEST_NAMES))
+.PHONY: all clean test run test-kats_test run-kats_test $(addprefix test-,$(TEST_NAMES)) $(addprefix run-,$(TEST_NAMES))
 
 # Default target: build all registered tests.
 all: test
@@ -72,6 +82,14 @@ run-$(1): $(BUILD_DIR)/$(1)
 endef
 
 $(foreach test,$(TEST_NAMES),$(eval $(call make_test_rules,$(test))))
+
+$(BUILD_DIR)/kats_test: KATs/kats.c KATs/kats.h $(COMMON_TEST_SRCS) $(kats_test_SRCS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) KATs/kats.c $(COMMON_TEST_SRCS) $(kats_test_SRCS) -o $(BUILD_DIR)/kats_test
+
+test-kats_test: $(BUILD_DIR)/kats_test
+
+run-kats_test: $(BUILD_DIR)/kats_test
+	./$(BUILD_DIR)/kats_test
 
 # Build every test listed in TEST_NAMES.
 test: $(addprefix test-,$(TEST_NAMES))

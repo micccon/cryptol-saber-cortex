@@ -124,9 +124,9 @@ void PKE_Enc(uint8_t m[SABER_KEYBYTES],
         cm[i] = (Zt)(((diff + H1) >> (SABER_EP - SABER_ET)) & MASK_Zt);
     }
 
-    // Pack the ciphertext as POLT2BS(cm) || POLVECp2BS(b').
-    POLT2BS(cm, ct->bytes);
-    POLVECp2BS(b1, ct->bytes + SABER_SCALEBYTES_KEM);
+    // Pack the ciphertext as POLVECp2BS(b') || POLT2BS(cm).
+    POLVECp2BS(b1, ct->bytes);
+    POLT2BS(cm, ct->bytes + SABER_POLYVECCOMPRESSEDBYTES);
 }
 
 void PKE_Dec(ct_t *ct, pke_sk_t *sk, uint8_t m[SABER_KEYBYTES]) {
@@ -135,10 +135,15 @@ void PKE_Dec(ct_t *ct, pke_sk_t *sk, uint8_t m[SABER_KEYBYTES]) {
     memset(s, 0, sizeof(s));
     BS2POLVECq(s, sk->sk);
 
-    // Recover cm from the first ciphertext component.
+    // Recover b' from the first ciphertext component.
+    PolyVec_Zp b1;
+    memset(b1, 0, sizeof(b1));
+    BS2POLVECp(b1, ct->bytes);
+
+    // Recover cm from the second ciphertext component.
     Poly_Zt cm0;
     memset(cm0, 0, sizeof(cm0));
-    BS2POLT(cm0, ct->bytes);
+    BS2POLT(cm0, ct->bytes + SABER_POLYVECCOMPRESSEDBYTES);
 
     // Lift cm back into Zp by shifting left EP - ET.
     Poly_Zp cm1;
@@ -146,11 +151,6 @@ void PKE_Dec(ct_t *ct, pke_sk_t *sk, uint8_t m[SABER_KEYBYTES]) {
     for (size_t i = 0; i < SABER_N; ++i) {
         cm1[i] = (Zp)((cm0[i] << (SABER_EP - SABER_ET)) & MASK_Zp);
     }
-
-    // Recover b' from the second ciphertext component.
-    PolyVec_Zp b1;
-    memset(b1, 0, sizeof(b1));
-    BS2POLVECp(b1, ct->bytes + SABER_SCALEBYTES_KEM);
 
     // Reduce the secret vector from Zq to Zp for the inner product.
     PolyVec_Zp s1;

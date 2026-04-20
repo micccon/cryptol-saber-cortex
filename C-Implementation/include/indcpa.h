@@ -30,11 +30,11 @@
 #define H3 (1U << (SABER_EP - SABER_ET - 1))
 
 /*
- * IND-CPA public key stored as seedA || b'.
+ * IND-CPA public key stored in byte-string order as b || seed_A.
  */
 typedef struct {
-    uint8_t seed_a[SABER_SEEDBYTES];
     uint8_t pk[SABER_PUBLICKEYBYTES - SABER_SEEDBYTES];
+    uint8_t seed_a[SABER_SEEDBYTES];
 } pk_t;
 
 /*
@@ -45,7 +45,7 @@ typedef struct {
 } pke_sk_t;
 
 /*
- * IND-CPA / KEM ciphertext stored in its packed byte-string form.
+ * IND-CPA / KEM ciphertext stored in its packed byte-string form as b' || cm.
  */
 typedef struct {
     uint8_t bytes[SABER_BYTES_CCA_DEC];

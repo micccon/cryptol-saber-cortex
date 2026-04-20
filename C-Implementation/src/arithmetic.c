@@ -25,15 +25,23 @@ void gen_matrix(const uint8_t seed[SABER_SEEDBYTES], PolyMatrix_Zq result) {
 void gen_secret(const uint8_t seed[SABER_NOISE_SEEDBYTES], PolyVec_Zq result) {
     uint8_t buf[SABER_L * SABER_N * SABER_MU / 8];
     shake128(buf, sizeof(buf), seed, SABER_NOISE_SEEDBYTES);
-    uint8_t unpacked_buf[2 * SABER_L * SABER_N];
-    unpack_bit_string(buf, unpacked_buf, sizeof(unpacked_buf), SABER_MU / 2);
-
+    /* "Split buf into 2 × l × n bit strings of length μ/2 bits"
+     * So thats (2 * l * n) / 8 byte strings of length (μ/2) / 8 bytes
+     * Since saber mu = 8 means each is a 4 bit half, so we can combine the halves of mu
+     * Then we'll have (l * n) bit strings each of length mu
+     * Converting to bytes, we'll have (l * n) / 8 byte strings of length mu / 8 bytes (1 byte)
+     * Sooooo we can just use the original buffer
+     */
     int k = 0;
     for (int i = 0; i < SABER_L; i++) {
         for (int j = 0; j < SABER_N; j++) {
+            uint8_t low = buf[k] & 0x0F;
+            uint8_t high = (buf[k] >> 4) & 0x0F;
+            // Calculate the hamming weight of the low and high halves, subtract, and store in result
             result[i][j] =
-                hamming_weight(&unpacked_buf[k], SABER_MU / 2) - hamming_weight(&unpacked_buf[k + 1], SABER_MU / 2);
-            k += 2;
+                (Zq)((hamming_weight(&low, SABER_MU / 2) -
+                    hamming_weight(&high, SABER_MU / 2)) & MASK_Zq);
+            ++k;
         }
     }
     return;
