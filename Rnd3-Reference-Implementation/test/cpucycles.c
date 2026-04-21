@@ -1,9 +1,8 @@
-#include <stdint.h>
-#include <time.h>
 #include "cpucycles.h"
 
-uint64_t cpucycles(void) {
-  struct timespec t;
-  clock_gettime(CLOCK_MONOTONIC, &t);
-  return (uint64_t)t.tv_sec * 1000000000ULL + t.tv_nsec;
+long long cpucycles(void) {
+  unsigned long long result;
+  asm volatile(".byte 15;.byte 49;shlq $32,%%rdx;orq %%rdx,%%rax"
+               : "=a"(result)::"%rdx");
+  return result;
 }
