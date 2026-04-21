@@ -15,6 +15,13 @@ scripts/__pycache__/
 compile_commands.json
 .cache/
 
-# Compiled executables (for when we begin building and testing)
+# Executables (for when we begin building and testing)
 C-Implementation/build/
 Cortex-M4/build/
+
+# Compiled objects and dependency files
+*.o
+*.d
+
+# Any stray default executables
+a.out
