@@ -1,3 +1,17 @@
+/*
+ * Utility functions shared across the Saber implementation.
+ *
+ * Declares the following helpers:
+ *   - load32_le / store32_le:  little-endian 32-bit word packing and unpacking
+ *   - transpose_matrix:        in-place transpose of a PolyMatrix_Zq
+ *   - hamming_weight:          population count over a byte array
+ *   - unpack_bit_string:       unpack a packed bit string into an element array
+ *   - verify:                  constant-time byte-string comparison
+ *   - cmov:                    constant-time conditional move
+ *
+ * Depends on: types.h
+ */
+
 #ifndef HELPERS_H
 #define HELPERS_H
 

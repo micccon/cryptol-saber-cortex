@@ -1,14 +1,4 @@
-/*
- * Implementations of BS<-->Poly serialization and deserialization routines.
- *
- * All functions currently assume the Saber parameter set (SABER_ET = 4,
- * SABER_EP = 10, SABER_EQ = 13, SABER_L = 3). See params.h.
- *
- * Packing conventions follow Sections 8.2.4 and 8.2.7 of the Round 3 Saber
- * specification (BS2POL / POL2BS families), using little-endian bit ordering
- * within each coefficient.
- */
-
+// Implementation of bit packing/unpacking from `pack_unpack.h`
 #include <stdint.h>
 #include <stddef.h> // for 'size_t'
 
@@ -18,19 +8,9 @@
 
 /* ---------------------------------------------------------------------------
  * Zt  <-->  ByteString   (SABER_ET bits per coefficient)
- *
- * For Saber: SABER_ET = 4, so two coefficients pack into one byte.
- * Output buffer length: SABER_SCALEBYTES_KEM = (4 * 256) / 8 = 128 bytes.
  * ---------------------------------------------------------------------------
  */
 
-/*
- * POLT2BS — pack a Poly_Zt into a byte string.
- *
- * Each coefficient is SABER_ET bits wide (4 bits for Saber), so pairs of
- * coefficients are packed into a single byte, low coefficient in the low
- * nibble.
- */
 void POLT2BS(Poly_Zt input_poly, uint8_t output_bytes[SABER_SCALEBYTES_KEM]) {
     for (size_t i = 0; i < SABER_N / 2; ++i) {
         // Get first and second coefficients of the current pair
@@ -42,11 +22,6 @@ void POLT2BS(Poly_Zt input_poly, uint8_t output_bytes[SABER_SCALEBYTES_KEM]) {
     }
 }
 
-/*
- * BS2POLT — unpack a byte string into a Poly_Zt.
- *
- * Inverse of POLT2BS. Masks each extracted coefficient to SABER_ET bits.
- */
 void BS2POLT(Poly_Zt output_poly, const uint8_t input_bytes[SABER_SCALEBYTES_KEM]) {
     for (size_t i = 0; i < SABER_SCALEBYTES_KEM; ++i) {
         // Extract first and second coefficients from packed byte
@@ -61,17 +36,9 @@ void BS2POLT(Poly_Zt output_poly, const uint8_t input_bytes[SABER_SCALEBYTES_KEM
 
 /* ---------------------------------------------------------------------------
  * Z2  <-->  ByteString   (1 bit per coefficient)
- *
- * Output buffer length: SABER_KEYBYTES = 32 bytes (256 bits).
  * ---------------------------------------------------------------------------
  */
 
-/*
- * POLmsg2BS — pack a Poly_Z2 (256 single-bit coefficients) into 32 bytes.
- *
- * Bit i of coefficient i is placed in bit (i % 8) of byte (i / 8),
- * LSB first.
- */
 void POLmsg2BS(Poly_Z2 input_poly, uint8_t output_bytes[SABER_KEYBYTES]) {
     for (size_t i = 0; i < SABER_N / 8; ++i) {
         // First coefficient in LSB, second in next LSB, third in next LSB, etc.
@@ -81,11 +48,6 @@ void POLmsg2BS(Poly_Z2 input_poly, uint8_t output_bytes[SABER_KEYBYTES]) {
     }
 }
 
-/*
- * BS2POLmsg — unpack 32 bytes into a Poly_Z2.
- *
- * Inverse of POLmsg2BS. Each coefficient is masked to 1 bit.
- */
 void BS2POLmsg(Poly_Z2 output_poly, const uint8_t input_bytes[SABER_KEYBYTES]) {
     for (size_t i = 0; i < SABER_KEYBYTES; ++i) {
         // Extract eight coefficients from packed byte
@@ -112,17 +74,9 @@ void BS2POLmsg(Poly_Z2 output_poly, const uint8_t input_bytes[SABER_KEYBYTES]) {
 
 /* ---------------------------------------------------------------------------
  * Zq vector  <-->  ByteString   (SABER_EQ = 13 bits per coefficient)
- *
- * Output buffer length: SABER_POLYVECBYTES = L * (13 * 256 / 8) = 1248 bytes.
- *
- * 13 bits does not divide evenly into bytes, so every 8 coefficients span
- * exactly 13 bytes (8 * 13 = 104 bits = 13 bytes).
  * ---------------------------------------------------------------------------
  */
 
-/*
- * POLq2BS — pack a Poly_Zq (256 13-bit coefficients) into a byte string.
- */
 static void POLq2BS(Poly_Zq input_poly, uint8_t output_bytes[SABER_POLYBYTES]) {
     // Work thru poly in batches of 8 coefficients, to pack 13 bytes at a time
     for (size_t i = 0; i < SABER_N / 8; ++i) {
@@ -160,11 +114,6 @@ static void POLq2BS(Poly_Zq input_poly, uint8_t output_bytes[SABER_POLYBYTES]) {
     }
 }
 
-/*
- * BS2POLq — unpack a byte string into a Poly_Zq.
- *
- * Inverse of POLq2BS. Each coefficient is masked to SABER_EQ = 13 bits.
- */
 void BS2POLq(Poly_Zq output_poly, const uint8_t input_bytes[SABER_POLYBYTES]) {
     // Extract eight coefficients from 13 bytes at a time
     for (size_t i = 0; i < SABER_N / 8; ++i) {
@@ -202,18 +151,12 @@ void BS2POLq(Poly_Zq output_poly, const uint8_t input_bytes[SABER_POLYBYTES]) {
     }
 }
 
-/*
- * POLVECq2BS — pack a PolyVec_Zq into a byte string.
- */
 void POLVECq2BS(PolyVec_Zq input_vec, uint8_t output_bytes[SABER_POLYVECBYTES]) {
     // Pack in a poly-by-poly fashion thru the entire vector
     for (size_t i = 0; i < SABER_L; ++i)
         POLq2BS(input_vec[i], output_bytes + i * SABER_POLYBYTES);
 }
 
-/*
- * BS2POLVECq — unpack a byte string into a PolyVec_Zq.
- */
 void BS2POLVECq(PolyVec_Zq output_vec, const uint8_t input_bytes[SABER_POLYVECBYTES]) {
     // Unpack in a poly-by-poly fashion thru the byte string
     for (size_t i = 0; i < SABER_L; ++i) {
@@ -223,17 +166,9 @@ void BS2POLVECq(PolyVec_Zq output_vec, const uint8_t input_bytes[SABER_POLYVECBY
 
 /* ---------------------------------------------------------------------------
  * Zp vector  <-->  ByteString   (SABER_EP = 10 bits per coefficient)
- *
- * Output buffer length: SABER_POLYVECCOMPRESSEDBYTES =
- *     L * (10 * 256 / 8) = 960 bytes.
- *
- * 10 bits: every 4 coefficients span exactly 5 bytes (4 * 10 = 40 bits).
  * ---------------------------------------------------------------------------
  */
 
-/*
- * POLp2BS — pack a Poly_Zp (256 10-bit coefficients) into a byte string.
- */
 static void POLp2BS(Poly_Zp input_poly, uint8_t output_bytes[SABER_POLYCOMPRESSEDBYTES]) {
     // Work thru poly in batches of 4 coefficients, to pack 5 bytes at a time
     for (size_t i = 0; i < SABER_N / 4; ++i) {
@@ -255,11 +190,6 @@ static void POLp2BS(Poly_Zp input_poly, uint8_t output_bytes[SABER_POLYCOMPRESSE
     }
 }
 
-/*
- * BS2POLp — unpack a byte string into a Poly_Zp.
- *
- * Inverse of POLp2BS. Each coefficient is masked to SABER_EP = 10 bits.
- */
 static void BS2POLp(Poly_Zp output_poly, const uint8_t input_bytes[SABER_POLYCOMPRESSEDBYTES]) {
     // Extract 4 coefficients from 5 bytes at a time
     for (size_t i = 0; i < SABER_N / 4; ++i) {
@@ -281,18 +211,12 @@ static void BS2POLp(Poly_Zp output_poly, const uint8_t input_bytes[SABER_POLYCOM
     }
 }
 
-/*
- * POLVECp2BS — pack a PolyVec_Zp into a byte string.
- */
 void POLVECp2BS(PolyVec_Zp input_vec, uint8_t output_bytes[SABER_POLYVECCOMPRESSEDBYTES]) {
     // Pack in a poly-by-poly fashion thru the entire vector
     for (size_t i = 0; i < SABER_L; ++i)
         POLp2BS(input_vec[i], output_bytes + i * SABER_POLYCOMPRESSEDBYTES);
 }
 
-/*
- * BS2POLVECp — unpack a byte string into a PolyVec_Zp.
- */
 void BS2POLVECp(PolyVec_Zp output_vec, const uint8_t input_bytes[SABER_POLYVECCOMPRESSEDBYTES]) {
     // Unpack in a poly-by-poly fashion thru the byte string
     for (size_t i = 0; i < SABER_L; ++i) {

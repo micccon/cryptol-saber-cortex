@@ -7,8 +7,6 @@
  *   make SABER_PARAMS=Saber
  *   make SABER_PARAMS=FireSaber
  * Defaults to Saber if nothing is specified.
- *
- * (I haven't made the Makefile yet)
  */
 
 #ifndef PARAMS_H
