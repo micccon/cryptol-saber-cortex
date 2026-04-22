@@ -4,6 +4,15 @@ INCLUDES = -Iinclude
 
 BUILD_DIR = build
 
+ARCH := $(shell uname -m)
+ifeq ($(ARCH),x86_64)
+BENCH_CYCLES_TARGET = $(BUILD_DIR)/bench_cycles
+BENCH_CYCLES_RUN    = ./$(BUILD_DIR)/bench_cycles
+else
+BENCH_CYCLES_TARGET =
+BENCH_CYCLES_RUN    =
+endif
+
 # Unit test names — each maps to unit_tests/<name>.c
 TEST_NAMES = randombytes_test poly_test pack_unpack_test arithmetic_test pke_test kem_test
 
@@ -89,11 +98,15 @@ run-kats: $(BUILD_DIR)/kats_test
 $(BUILD_DIR)/bench_portable: KATs/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(INCLUDES) KATs/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) -o $(BUILD_DIR)/bench_portable
 
-bench: $(BUILD_DIR)/bench_portable
+$(BUILD_DIR)/bench_cycles: KATs/bench_cycles.c KATs/cpucycles.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) KATs/bench_cycles.c KATs/cpucycles.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) -o $(BUILD_DIR)/bench_cycles
+
+bench: $(BUILD_DIR)/bench_portable $(BENCH_CYCLES_TARGET)
 	./$(BUILD_DIR)/bench_portable
+	$(BENCH_CYCLES_RUN)
 
 # Build all tests without running them.
-test: $(addprefix test-,$(TEST_NAMES)) test-kats $(BUILD_DIR)/bench_portable
+test: $(addprefix test-,$(TEST_NAMES)) test-kats $(BUILD_DIR)/bench_portable $(BENCH_CYCLES_TARGET)
 
 # Build and run all tests.
 run: $(addprefix run-,$(TEST_NAMES)) run-kats
