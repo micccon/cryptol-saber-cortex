@@ -4,7 +4,7 @@ INCLUDES = -Iinclude
 
 BUILD_DIR = build
 
-# Unit test names — each maps to tests/<name>.c
+# Unit test names — each maps to unit_tests/<name>.c
 TEST_NAMES = randombytes_test poly_test pack_unpack_test arithmetic_test pke_test kem_test
 
 # Sources linked into every test binary.
@@ -51,7 +51,7 @@ pke_test_SRCS = \
 
 kem_test_SRCS = $(FULL_KEM_SRCS)
 
-.PHONY: all test run clean \
+.PHONY: all test run clean bench \
         test-kats run-kats \
         $(addprefix test-,$(TEST_NAMES)) \
         $(addprefix run-,$(TEST_NAMES))
@@ -67,8 +67,8 @@ $(BUILD_DIR):
 #   test-<testname>    - build only that test
 #   run-<testname>     - build and run only that test
 define make_test_rules
-$(BUILD_DIR)/$(1): tests/$(1).c $(COMMON_TEST_SRCS) $$($(1)_SRCS) | $(BUILD_DIR)
-	$$(CC) $$(CFLAGS) $$(INCLUDES) tests/$(1).c $$(COMMON_TEST_SRCS) $$($(1)_SRCS) -o $(BUILD_DIR)/$(1)
+$(BUILD_DIR)/$(1): unit_tests/$(1).c $(COMMON_TEST_SRCS) $$($(1)_SRCS) | $(BUILD_DIR)
+	$$(CC) $$(CFLAGS) $$(INCLUDES) unit_tests/$(1).c $$(COMMON_TEST_SRCS) $$($(1)_SRCS) -o $(BUILD_DIR)/$(1)
 
 test-$(1): $(BUILD_DIR)/$(1)
 
@@ -86,8 +86,14 @@ test-kats: $(BUILD_DIR)/kats_test
 run-kats: $(BUILD_DIR)/kats_test
 	./$(BUILD_DIR)/kats_test
 
+$(BUILD_DIR)/bench_portable: KATs/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) KATs/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) -o $(BUILD_DIR)/bench_portable
+
+bench: $(BUILD_DIR)/bench_portable
+	./$(BUILD_DIR)/bench_portable
+
 # Build all tests without running them.
-test: $(addprefix test-,$(TEST_NAMES)) test-kats
+test: $(addprefix test-,$(TEST_NAMES)) test-kats $(BUILD_DIR)/bench_portable
 
 # Build and run all tests.
 run: $(addprefix run-,$(TEST_NAMES)) run-kats
