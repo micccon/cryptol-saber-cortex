@@ -12,6 +12,9 @@
  * Depends on: types.h
  */
 
+// TURN OFF clang-format for this file for readability purposes
+// clang-format off
+
 #ifndef HELPERS_H
 #define HELPERS_H
 

@@ -13,13 +13,16 @@
  * Depends on: params.h, types.h
  */
 
+// TURN OFF clang-format for this file for readability purposes
+// clang-format off
+
 #ifndef POLY_H
 #define POLY_H
 
 #include "params.h"
 #include "types.h"
 
-/*
+/**
  * Negacyclic polynomial multiplication in R_q = Z_q[x] / (x^N + 1).
  * Computes:
  *     result = a * b mod (x^SABER_N + 1)
@@ -30,7 +33,7 @@
  */
 void poly_mul_negacyclic_zq(const Poly_Zq a, const Poly_Zq b, Poly_Zq result);
 
-/*
+/**
  * Negacyclic polynomial multiplication in R_p = Z_p[x] / (x^N + 1).
  * Computes:
  *     result = a * b mod (x^SABER_N + 1)

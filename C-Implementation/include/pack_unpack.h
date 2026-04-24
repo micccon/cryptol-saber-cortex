@@ -14,6 +14,9 @@
  * Depends on: params.h, types.h
  */
 
+// TURN OFF clang-format for this file for readability purposes
+// clang-format off
+
 #ifndef PACK_UNPACK_H
 #define PACK_UNPACK_H
 

@@ -9,11 +9,11 @@
  * Defaults to Saber if nothing is specified.
  */
 
-#ifndef PARAMS_H
-#define PARAMS_H
-
 // TURN OFF clang-format for this file for readability purposes
 // clang-format off
+
+#ifndef PARAMS_H
+#define PARAMS_H
  
 #if defined(LightSaber)
 #   define SABER_L   2

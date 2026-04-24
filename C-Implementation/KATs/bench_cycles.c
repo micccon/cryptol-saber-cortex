@@ -88,7 +88,7 @@ void print_sys_info() {
 }
 
 void print_totals(uint64_t keygen_total, uint64_t encaps_total, uint64_t decaps_total) {
-    printf("---Total CPU Cycles (across %d iterations---\n"
+    printf("---Total CPU Cycles (across %d iterations)---\n"
            "KEM.KeyGen:\t%" PRIu64 " cycles\n"
            "KEM.Encaps:\t%" PRIu64 " cycles\n"
            "KEM.Decaps:\t%" PRIu64 " cycles\n",

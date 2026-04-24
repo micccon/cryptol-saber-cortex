@@ -12,6 +12,9 @@
  * Depends on: params.h, types.h, poly.h, third_party/fips202.h
  */
 
+// TURN OFF clang-format for this file for readability purposes
+// clang-format off
+
 #ifndef ARITHMETIC_H
 #define ARITHMETIC_H
 

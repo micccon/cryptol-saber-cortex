@@ -11,6 +11,9 @@
  * Depends on: params.h (for key and seed sizes)
  */
 
+// TURN OFF clang-format for this file for readability purposes
+// clang-format off
+
 #ifndef RANDOMBYTES_H
 #define RANDOMBYTES_H
 

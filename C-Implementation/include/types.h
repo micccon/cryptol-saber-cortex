@@ -10,6 +10,9 @@
  * Depends on: params.h (for SABER_N, SABER_L, and modulus sizes)
  */
 
+// TURN OFF clang-format for this file for readability purposes
+// clang-format off
+
 #ifndef TYPES_H
 #define TYPES_H
 

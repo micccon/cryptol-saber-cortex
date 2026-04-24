@@ -11,6 +11,9 @@
  * Depends on: params.h, types.h, indcpa.h, third_party/fips202.h
  */
 
+// TURN OFF clang-format for this file for readability purposes
+// clang-format off
+
 #ifndef KEM_H
 #define KEM_H
 
@@ -34,12 +37,12 @@ typedef struct {
     uint8_t z[SABER_KEYBYTES];
 } kem_sk_t;
 
-/*
+/**
  * Generates a KEM public/secret key pair (Algorithm 20).
  */
 void KEM_KeyGen(pk_t *pk, kem_sk_t *sk);
 
-/*
+/**
  * Deterministic variant of KEM_KeyGen used for tests/KATs.
  *
  * @param pk empty pk struct storing the IND-CPA public key as b || seed_A
@@ -57,7 +60,7 @@ void KEM_KeyGen_Deterministic(pk_t *pk,
                               uint8_t seed_s[SABER_NOISE_SEEDBYTES],
                               uint8_t z[SABER_KEYBYTES]);
 
-/*
+/**
  * Encapsulates a shared secret under the given public key (Algorithm 21)
  *
  * @param pk public key struct to encapsulate under
@@ -69,7 +72,7 @@ void KEM_Encaps(pk_t *pk,
                 uint8_t key[SABER_KEYBYTES],
                 ct_t *ct);
 
-/*
+/**
  * Decapsulates a ciphertext to recover the shared secret (Algorithm 22)
  *
  * @param ct input ciphertext struct to decapsulate

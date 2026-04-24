@@ -14,6 +14,9 @@
  * third_party/fips202.h
  */
 
+// TURN OFF clang-format for this file for readability purposes
+// clang-format off
+
 #ifndef INDCPA_H
 #define INDCPA_H
 

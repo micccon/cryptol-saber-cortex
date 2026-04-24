@@ -1,5 +1,5 @@
 CC ?= cc
-CFLAGS ?= -Wall -Wextra -Wpedantic -Wno-newline-eof -std=c23
+CFLAGS ?= -Wall -Wextra -Wpedantic -Wno-newline-eof -O3 -std=gnu2x
 INCLUDES = -Iinclude
 
 BUILD_DIR = build
@@ -14,7 +14,7 @@ BENCH_CYCLES_RUN    =
 endif
 
 # Unit test names — each maps to unit_tests/<name>.c
-TEST_NAMES = randombytes_test poly_test pack_unpack_test arithmetic_test pke_test kem_test
+TEST_NAMES = randombytes_test poly_test pack_unpack_test arithmetic_test pke_test kem_test montgomery_test
 
 # Sources linked into every test binary.
 COMMON_TEST_SRCS = \
@@ -57,6 +57,9 @@ pke_test_SRCS = \
 	src/randombytes.c \
 	third_party/fips202.c \
 	third_party/AES/WjCryptLib_Aes.c
+
+montgomery_test_SRCS = \
+	src/ntt_helpers.c
 
 kem_test_SRCS = $(FULL_KEM_SRCS)
 
