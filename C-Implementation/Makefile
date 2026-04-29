@@ -98,11 +98,11 @@ test-kats: $(BUILD_DIR)/kats_test
 run-kats: $(BUILD_DIR)/kats_test
 	./$(BUILD_DIR)/kats_test
 
-$(BUILD_DIR)/bench_portable: KATs/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) KATs/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) -o $(BUILD_DIR)/bench_portable
+$(BUILD_DIR)/bench_portable: bench/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) bench/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) -o $(BUILD_DIR)/bench_portable
 
-$(BUILD_DIR)/bench_cycles: KATs/bench_cycles.c KATs/cpucycles.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) KATs/bench_cycles.c KATs/cpucycles.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) -o $(BUILD_DIR)/bench_cycles
+$(BUILD_DIR)/bench_cycles: bench/bench_cycles.c bench/cpucycles.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) bench/bench_cycles.c bench/cpucycles.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) -o $(BUILD_DIR)/bench_cycles
 
 bench: $(BUILD_DIR)/bench_portable $(BENCH_CYCLES_TARGET)
 	./$(BUILD_DIR)/bench_portable

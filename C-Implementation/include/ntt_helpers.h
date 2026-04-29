@@ -62,7 +62,7 @@
  * @param  a    64-bit value to reduce
  * @return      32-bit r ∈ [0, q') such that r ≡ T * R^{-1} (mod q')
  */
-int32_t montgomery_reduce(int64_t a);
+uint32_t montgomery_reduce(uint64_t a);
 
 /**
  * Computes the Montgomery product of two values already in Montgomery form.
@@ -71,7 +71,7 @@ int32_t montgomery_reduce(int64_t a);
  * @param  b    Second 32-bit Montgomery-form multiplicand
  * @return      Montgomery Product r such that r ≡ â * b̂ * R (mod q')
  */
-int32_t montgomery_multiply(int32_t a, int32_t b);
+uint32_t montgomery_multiply(uint32_t a, uint32_t b);
 
 /**
  * Converts an integer into its Montgomery representative.
@@ -79,7 +79,7 @@ int32_t montgomery_multiply(int32_t a, int32_t b);
  * @param  a    Arbitrary 32-bit integer such that a ∈ [0, q')
  * @return      â, the Montgomery representation of a, such that â ≡ a * R (mod q')
  */
-int32_t to_montgomery(int32_t a);
+uint32_t to_montgomery(uint32_t a);
 
 /**
  * Recovers an integer from its Montgomery representative.
@@ -87,6 +87,6 @@ int32_t to_montgomery(int32_t a);
  * @param  a    â, the 32-bit Montgomery-form value such that â ≡ a * R (mod q')
  * @return      Recovered value r such that r ≡ a (mod q')
  */
-int32_t from_montgomery(int32_t a);
+uint32_t from_montgomery(uint32_t a);
 
 #endif

@@ -20,14 +20,14 @@
 
 #include "ntt_helpers.h"
 
-#define NUM_ITERS 1000
+#define NUM_ITERS 10000
 
 int main(void) {
     srand(time(NULL));
 
-    int32_t a, b, c, d;
-    int32_t montA, montB, montC, montD;
-    int32_t aTimesB, fourWayProduct;
+    uint32_t a, b, c, d;
+    uint32_t montA, montB, montC, montD;
+    uint32_t aTimesB, fourWayProduct;
 
     for (int i = 0; i < NUM_ITERS; ++i) {
         a = rand() % NTT_Q;
@@ -38,10 +38,10 @@ int main(void) {
         montB = to_montgomery(b);
         montC = to_montgomery(c);
         montD = to_montgomery(d);
-        aTimesB = ((int64_t)a * (int64_t)b) % NTT_Q;
-        fourWayProduct = ((int64_t)a * (int64_t)b) % NTT_Q;
-        fourWayProduct = ((int64_t)fourWayProduct * (int64_t)c) % NTT_Q;
-        fourWayProduct = ((int64_t)fourWayProduct * (int64_t)d) % NTT_Q;
+        aTimesB = ((uint64_t)a * (uint64_t)b) % NTT_Q;
+        fourWayProduct = ((uint64_t)a * (uint64_t)b) % NTT_Q;
+        fourWayProduct = ((uint64_t)fourWayProduct * (uint64_t)c) % NTT_Q;
+        fourWayProduct = ((uint64_t)fourWayProduct * (uint64_t)d) % NTT_Q;
 
         // Check Montgomery roundtrip correctness on 1/4 of all random numbers
         if (a != (from_montgomery(montA))) {

@@ -17,12 +17,12 @@
  *           ≡  T (mod q')               --- since m * q' ≡ 0 (mod q')
  *        t  ≡  T * R^{-1} (mod q')      --- multiply both sides by R^{-1}
  */
-int32_t montgomery_reduce(int64_t a) {
-    int32_t m = (int32_t)a * NTT_Q_INV;
-    int32_t t = (int32_t)((a + ((int64_t)m * NTT_Q)) >> 32);
+uint32_t montgomery_reduce(uint64_t a) {
+    uint32_t m = (uint32_t)a * NTT_Q_INV;
+    uint32_t t = (uint32_t)((a + ((uint64_t)m * NTT_Q)) >> 32);
 
-    if (t < 0)
-        t += NTT_Q;
+    if (t >= NTT_Q)
+        t -= NTT_Q;
     return t;
 }
 
@@ -34,7 +34,7 @@ int32_t montgomery_reduce(int64_t a) {
  *                               =  (a * R) * (b * R) * R^{-1} (mod q')
  *                               =  a * b * R (mod q')            --- precisely the Montgomery representative of a * b
  */
-int32_t montgomery_multiply(int32_t a, int32_t b) { return montgomery_reduce((int64_t)a * (int64_t)b); }
+uint32_t montgomery_multiply(uint32_t a, uint32_t b) { return montgomery_reduce((uint64_t)a * (uint64_t)b); }
 
 /*
  * To convert some integer a ∈ [0, q') into Montgomery space, we need to
@@ -45,7 +45,7 @@ int32_t montgomery_multiply(int32_t a, int32_t b) { return montgomery_reduce((in
  *                                =  a * R (mod q')
  *                                =  â
  */
-int32_t to_montgomery(int32_t a) { return montgomery_multiply(a, NTT_R2); }
+uint32_t to_montgomery(uint32_t a) { return montgomery_multiply(a, NTT_R2); }
 
 /*
  * To recover some integer a ∈ [0, q') from its Montgomery representative â ∈ [0, q'),
@@ -55,4 +55,4 @@ int32_t to_montgomery(int32_t a) { return montgomery_multiply(a, NTT_R2); }
  *                         =  (a * R) * R^{-1} (mod q')
  *                         =  a (mod q')
  */
-int32_t from_montgomery(int32_t a) { return montgomery_reduce((int64_t)a); }
+uint32_t from_montgomery(uint32_t a) { return montgomery_reduce((uint64_t)a); }
