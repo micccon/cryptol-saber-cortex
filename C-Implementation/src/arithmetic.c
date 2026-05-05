@@ -9,9 +9,10 @@ void gen_matrix(const uint8_t seed[SABER_SEEDBYTES], PolyMatrix_Zq result) {
     uint8_t buf[SABER_L * SABER_L * SABER_N * SABER_EQ / 8];
     shake128(buf, sizeof(buf), seed, SABER_SEEDBYTES);
 
-    // Convert into split buffer where each row corresponds to one polynomial, for easier unpacking
-    uint8_t buf_matrix[SABER_L * SABER_L][SABER_EQ * SABER_N / 8];
-    memcpy(buf_matrix, buf, sizeof(buf_matrix));
+    // Reinterpret buf as a 2D array [L*L][poly_bytes] to index each polynomial directly,
+    // avoiding a second stack allocation and memcpy.
+    uint8_t (*buf_matrix)[SABER_EQ * SABER_N / 8] =
+        (uint8_t (*)[SABER_EQ * SABER_N / 8])buf;
 
     // For each vector
     for (int i1 = 0; i1 < SABER_L; i1++)

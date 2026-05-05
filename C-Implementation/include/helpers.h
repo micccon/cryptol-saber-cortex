@@ -39,12 +39,12 @@ uint32_t load32_le(const uint8_t bytes[4]);
 void store32_le(uint8_t bytes[4], uint32_t word);
 
 /**
- * Computes the transpose of a polynomial matrix over Zq.
+ * Transposes a polynomial matrix over Zq in-place by swapping A[i][j] with A[j][i]
+ * for all i < j. After this call, A holds its own transpose.
  *
- * @param input Input matrix
- * @param result Output buffer for the transposed matrix
+ * @param A Matrix to transpose in-place
  */
-void transpose_matrix(PolyMatrix_Zq input, PolyMatrix_Zq result);
+void transpose_matrix(PolyMatrix_Zq A);
 
 /**
  * Calculates the hamming weight of a bit string represented as a byte array.
