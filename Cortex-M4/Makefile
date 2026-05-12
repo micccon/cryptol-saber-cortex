@@ -14,7 +14,7 @@ BENCH_CYCLES_RUN    =
 endif
 
 # Unit test names — each maps to unit_tests/<name>.c
-TEST_NAMES = randombytes_test poly_test pack_unpack_test arithmetic_test pke_test kem_test
+TEST_NAMES = randombytes_test poly_test pack_unpack_test arithmetic_test pke_test kem_test montgomery_test
 
 # Sources linked into every test binary.
 COMMON_TEST_SRCS = \
@@ -26,6 +26,7 @@ FULL_KEM_SRCS = \
 	src/indcpa.c \
 	src/arithmetic.c \
 	src/poly.c \
+	src/ntt_helpers.c \
 	src/pack_unpack.c \
 	src/randombytes.c \
 	third_party/fips202.c \
@@ -41,11 +42,13 @@ pack_unpack_test_SRCS = \
 	src/pack_unpack.c
 
 poly_test_SRCS = \
-	src/poly.c
+	src/poly.c \
+	src/ntt_helpers.c
 
 arithmetic_test_SRCS = \
 	src/arithmetic.c \
 	src/poly.c \
+	src/ntt_helpers.c \
 	src/pack_unpack.c \
 	third_party/fips202.c
 
@@ -53,10 +56,14 @@ pke_test_SRCS = \
 	src/indcpa.c \
 	src/arithmetic.c \
 	src/poly.c \
+	src/ntt_helpers.c \
 	src/pack_unpack.c \
 	src/randombytes.c \
 	third_party/fips202.c \
 	third_party/AES/WjCryptLib_Aes.c
+
+montgomery_test_SRCS = \
+	src/ntt_helpers.c
 
 kem_test_SRCS = $(FULL_KEM_SRCS)
 

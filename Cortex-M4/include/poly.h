@@ -1,0 +1,67 @@
+/*
+ * Polynomial arithmetic over the ring R_q = Z_q[x] / (x^256 + 1).
+ *
+ * Declares functions for polynomial multiplication (PolyMul) and
+ * accumulation, which are the core arithmetic operations in Saber.
+ * The implementation uses schoolbook multiplication; we may shoot for
+ * more efficient approaches (e.g. Toom-Cook, Karatsuba, NTTs) later,
+ * particularly for the optimized Cortex-M4 target.
+ *
+ * See Section 8.3.7 of the Round 3 Saber specification for the
+ * definition of PolyMul.
+ *
+ * Depends on: params.h, types.h
+ */
+
+// TURN OFF clang-format for this file for readability purposes
+// clang-format off
+
+#ifndef POLY_H
+#define POLY_H
+
+#include "types.h"
+
+/**
+ * Negacyclic polynomial multiplication in R_q = Z_q[x] / (x^N + 1).
+ * Computes:
+ *     result = a * b mod (x^SABER_N + 1)
+ *
+ * @param a      Input polynomial in R_q (Poly_Zq)
+ * @param b      Input polynomial in R_q (Poly_Zq)
+ * @param result Output buffer for the resulting polynomial in R_q (Poly_Zq)
+ */
+void poly_mul_negacyclic_zq(const Poly_Zq a, const Poly_Zq b, Poly_Zq result);
+
+/**
+ * Negacyclic polynomial multiplication in R_p = Z_p[x] / (x^N + 1).
+ * Computes:
+ *     result = a * b mod (x^SABER_N + 1)
+ *
+ * @param a      Input polynomial in R_p (Poly_Zp)
+ * @param b      Input polynomial in R_p (Poly_Zp)
+ * @param result Output buffer for the resulting polynomial in R_p (Poly_Zp)
+ */
+void poly_mul_negacyclic_zp(const Poly_Zp a, const Poly_Zp b, Poly_Zp result);
+
+
+/**
+ * NTT-based negacyclic polynomial multiplication in R_q = Z_q[x] / (x^N + 1).
+ * Equivalent to poly_mul_negacyclic_zq but uses the NTT pipeline for efficiency.
+ *
+ * @param a      Input polynomial in R_q (Poly_Zq)
+ * @param b      Input polynomial in R_q (Poly_Zq)
+ * @param result Output buffer for the resulting polynomial in R_q (Poly_Zq)
+ */
+void poly_mul_ntt_zq(const Poly_Zq a, const Poly_Zq b, Poly_Zq result);
+
+/**
+ * NTT-based negacyclic polynomial multiplication in R_p = Z_p[x] / (x^N + 1).
+ * Equivalent to poly_mul_negacyclic_zp but uses the NTT pipeline for efficiency.
+ *
+ * @param a      Input polynomial in R_p (Poly_Zp)
+ * @param b      Input polynomial in R_p (Poly_Zp)
+ * @param result Output buffer for the resulting polynomial in R_p (Poly_Zp)
+ */
+void poly_mul_ntt_zp(const Poly_Zp a, const Poly_Zp b, Poly_Zp result);
+
+#endif
