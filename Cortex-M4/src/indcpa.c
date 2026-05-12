@@ -2,9 +2,14 @@
 
 #include <string.h>
 
-void PKE_KeyGen_Deterministic(pk_t *pk,
-                              pke_sk_t *sk,
-                              uint8_t seed_a[SABER_SEEDBYTES],
+// Rounds each coefficient of v in-place from Zq to Zp using the Saber H1 shift.
+static void polyvec_round_zq_to_zp(PolyVec_Zq v) {
+    for (size_t i = 0; i < SABER_L; ++i)
+        for (size_t j = 0; j < SABER_N; ++j)
+            v[i][j] = ((v[i][j] + H1) >> (SABER_EQ - SABER_EP)) & MASK_Zp;
+}
+
+void PKE_KeyGen_Deterministic(pk_t *pk, pke_sk_t *sk, uint8_t seed_a[SABER_SEEDBYTES],
                               uint8_t seed_s[SABER_NOISE_SEEDBYTES]) {
     // Store the public matrix seed in the public key.
     memcpy(pk->seed_a, seed_a, SABER_SEEDBYTES);
@@ -19,29 +24,20 @@ void PKE_KeyGen_Deterministic(pk_t *pk,
     memset(s, 0, sizeof(s));
     gen_secret(seed_s, s);
 
-    // Transpose A to obtain A^T for the keygen matrix-vector product.
-    PolyMatrix_Zq AT;
-    memset(AT, 0, sizeof(AT));
-    transpose_matrix(A, AT);
+    // Transpose A in-place to obtain A^T; eliminates the need for a second matrix buffer.
+    transpose_matrix(A);
 
     // Compute b = A^T * s in R_q.
     PolyVec_Zq b;
     memset(b, 0, sizeof(b));
-    matrix_vector_mul(AT, s, b);
+    matrix_vector_mul(A, s, b);
 
-    // Round b from Zq down to Zp using the Saber H1 constant.
-    PolyVec_Zp b1;
-    memset(b1, 0, sizeof(b1));
-    for (size_t i = 0; i < SABER_L; ++i) {
-        // For each coefficient, add h1 and shift right, then mask to Zp.
-        for (size_t j = 0; j < SABER_N; ++j) {
-            b1[i][j] = (Zp)(((b[i][j] + H1) >> (SABER_EQ - SABER_EP)) & MASK_Zp);
-        }
-    }
+    // Round b in-place from Zq to Zp.
+    polyvec_round_zq_to_zp(b);
 
     // Pack the secret vector and rounded public vector into the key structs.
     POLVECq2BS(s, sk->sk);
-    POLVECp2BS(b1, pk->pk);
+    POLVECp2BS(b, pk->pk);
 }
 
 void PKE_KeyGen(pk_t *pk, pke_sk_t *sk) {
@@ -59,10 +55,7 @@ void PKE_KeyGen(pk_t *pk, pke_sk_t *sk) {
     PKE_KeyGen_Deterministic(pk, sk, seed_a, seed_s);
 }
 
-void PKE_Enc(uint8_t m[SABER_KEYBYTES],
-             uint8_t seed_s[SABER_SEEDBYTES],
-             pk_t *pk,
-             ct_t *ct) {
+void PKE_Enc(uint8_t m[SABER_KEYBYTES], uint8_t seed_s[SABER_SEEDBYTES], pk_t *pk, ct_t *ct) {
     // Generate matrix A from seed_a in the public key.
     PolyMatrix_Zq A;
     memset(A, 0, sizeof(A));
@@ -73,60 +66,49 @@ void PKE_Enc(uint8_t m[SABER_KEYBYTES],
     memset(s, 0, sizeof(s));
     gen_secret(seed_s, s);
 
-    // Compute b = A * s' in R_q.
+    // Compute b = A * s' in R_q, then round in-place to Zp (reused for the first ciphertext component).
     PolyVec_Zq b;
     memset(b, 0, sizeof(b));
     matrix_vector_mul(A, s, b);
+    polyvec_round_zq_to_zp(b);
 
-    // Round b from Zq down to Zp to form the first ciphertext component.
-    PolyVec_Zp b1;
-    memset(b1, 0, sizeof(b1));
-    for (size_t i = 0; i < SABER_L; ++i) {
-        for (size_t j = 0; j < SABER_N; ++j) {
-            b1[i][j] = (Zp)(((b[i][j] + H1) >> (SABER_EQ - SABER_EP)) & MASK_Zp);
-        }
-    }
-
-    // Recover the public-key vector b from its packed Zp encoding.
+    // Recover the public-key vector b0 from its packed Zp encoding.
     PolyVec_Zp b0;
     memset(b0, 0, sizeof(b0));
     BS2POLVECp(b0, pk->pk);
 
-    // Reduce the ephemeral secret vector from Zq to Zp for the inner product.
-    PolyVec_Zp s1;
-    memset(s1, 0, sizeof(s1));
+    // Reduce s in-place from Zq to Zp for the inner product; s is reused for s1.
     for (size_t i = 0; i < SABER_L; ++i) {
         for (size_t j = 0; j < SABER_N; ++j) {
-            s1[i][j] = (Zp)(s[i][j] & MASK_Zp);
+            s[i][j] &= MASK_Zp;
         }
     }
 
-    // Compute v' = <b, s' mod p> in R_p.
+    // Compute v' = <b0, s' mod p> in R_p.
+    // v1 is reused for cm: after the compression loop below, v1 holds the second ciphertext component.
     Poly_Zp v1;
     memset(v1, 0, sizeof(v1));
-    inner_prod(b0, s1, v1);
+    inner_prod(b0, s, v1);
 
-    // Decode the message bits and lift them into Zp by shifting left EP - 1.
+    // Decode the message bits and lift in-place into Zp by shifting left EP - 1.
+    // m_bits is reused for m1: after the loop, m_bits holds the lifted message polynomial.
     Poly_Z2 m_bits;
-    Poly_Zp m1;
     memset(m_bits, 0, sizeof(m_bits));
-    memset(m1, 0, sizeof(m1));
     BS2POLmsg(m_bits, m);
     for (size_t i = 0; i < SABER_N; ++i) {
-        m1[i] = (Zp)((m_bits[i] << (SABER_EP - 1)) & MASK_Zp);
+        m_bits[i] = (m_bits[i] << (SABER_EP - 1)) & MASK_Zp;
     }
 
-    // Compute cm = (v' - mp + H1) >> (EP - ET) in R_p, then compress into Zt.
-    Poly_Zt cm;
-    memset(cm, 0, sizeof(cm));
+    // Compute cm = (v' - mp + H1) >> (EP - ET) in-place on v1, compressed into Zt.
     for (size_t i = 0; i < SABER_N; ++i) {
-        Zp diff = (Zp)((v1[i] - m1[i]) & MASK_Zp);
-        cm[i] = (Zt)(((diff + H1) >> (SABER_EP - SABER_ET)) & MASK_Zt);
+        Zp diff = (v1[i] - m_bits[i]) & MASK_Zp;
+        v1[i] = ((diff + H1) >> (SABER_EP - SABER_ET)) & MASK_Zt;
     }
 
     // Pack the ciphertext as POLVECp2BS(b') || POLT2BS(cm).
-    POLVECp2BS(b1, ct->bytes);
-    POLT2BS(cm, ct->bytes + SABER_POLYVECCOMPRESSEDBYTES);
+    // b and v1 hold Zp and Zt values respectively; underlying type is uint16_t throughout.
+    POLVECp2BS(b, ct->bytes);
+    POLT2BS(v1, ct->bytes + SABER_POLYVECCOMPRESSEDBYTES);
 }
 
 void PKE_Dec(ct_t *ct, pke_sk_t *sk, uint8_t m[SABER_KEYBYTES]) {

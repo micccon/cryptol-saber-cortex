@@ -9,13 +9,12 @@ void gen_matrix(const uint8_t seed[SABER_SEEDBYTES], PolyMatrix_Zq result) {
     uint8_t buf[SABER_L * SABER_L * SABER_N * SABER_EQ / 8];
     shake128(buf, sizeof(buf), seed, SABER_SEEDBYTES);
 
-    // Convert into split buffer where each row corresponds to one polynomial, for easier unpacking
-    uint8_t buf_matrix[SABER_L * SABER_L][SABER_EQ * SABER_N / 8];
-    memcpy(buf_matrix, buf, sizeof(buf_matrix));
+    // Reinterpret buf as a 2D array [L*L][poly_bytes] to index each polynomial directly,
+    // avoiding a second stack allocation and memcpy.
+    uint8_t(*buf_matrix)[SABER_EQ * SABER_N / 8] = (uint8_t(*)[SABER_EQ * SABER_N / 8]) buf;
 
     // For each vector
-    for (int i1 = 0; i1 < SABER_L; i1++)
-    {
+    for (int i1 = 0; i1 < SABER_L; i1++) {
         // For each polynomial
         for (int i2 = 0; i2 < SABER_L; i2++)
             BS2POLq(result[i1][i2], buf_matrix[i1 * SABER_L + i2]);
@@ -38,9 +37,7 @@ void gen_secret(const uint8_t seed[SABER_NOISE_SEEDBYTES], PolyVec_Zq result) {
             uint8_t low = buf[k] & 0x0F;
             uint8_t high = (buf[k] >> 4) & 0x0F;
             // Calculate the hamming weight of the low and high halves, subtract, and store in result
-            result[i][j] =
-                (Zq)((hamming_weight(&low, SABER_MU / 2) -
-                    hamming_weight(&high, SABER_MU / 2)) & MASK_Zq);
+            result[i][j] = (Zq)((hamming_weight(&low, SABER_MU / 2) - hamming_weight(&high, SABER_MU / 2)) & MASK_Zq);
             ++k;
         }
     }
@@ -63,18 +60,16 @@ void inner_prod(PolyVec_Zp a, PolyVec_Zp b, Poly_Zp result) {
     }
 }
 
-void matrix_vector_mul(PolyMatrix_Zq M, PolyVec_Zq v, PolyVec_Zq result)
-{
+void matrix_vector_mul(PolyMatrix_Zq M, PolyVec_Zq v, PolyVec_Zq result) {
     // For each vector in M
     for (int i = 0; i < SABER_L; i++) {
         Poly_Zq product;
         memset(result[i], 0, sizeof(Poly_Zq));
 
         // For each poly in M and v
-        for (int j = 0; j < SABER_L; j++)
-        {
+        for (int j = 0; j < SABER_L; j++) {
             poly_mul_negacyclic_zq(M[i][j], v[j], product);
-            
+
             for (int k = 0; k < SABER_N; k++)
                 result[i][k] = (Zq)((result[i][k] + product[k]) & MASK_Zq);
         }

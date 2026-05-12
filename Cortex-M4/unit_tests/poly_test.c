@@ -6,18 +6,16 @@
 #include "poly.h"
 
 static void random_poly_zq(Poly_Zq poly) {
-    for (int i = 0; i < SABER_N; ++i) {
+    for (int i = 0; i < SABER_N; ++i)
         poly[i] = rand() & MASK_Zq;
-    }
 }
 
 static void random_poly_zp(Poly_Zp poly) {
-    for (int i = 0; i < SABER_N; ++i) {
+    for (int i = 0; i < SABER_N; ++i)
         poly[i] = rand() & MASK_Zp;
-    }
 }
 
-static int check_zero_poly_schoolbook() {
+static int check_zero_poly_schoolbook(void) {
     Poly_Zq zeroes = {0};
     Poly_Zq poly;
     random_poly_zq(poly);
@@ -26,14 +24,16 @@ static int check_zero_poly_schoolbook() {
     poly_mul_negacyclic_zq(zeroes, poly, res);
 
     for (int i = 0; i < SABER_N; ++i) {
-        if (res[i] != 0)
+        if (res[i] != 0) {
+            printf("[FAIL] check_zero_poly_schoolbook: coefficient %d nonzero (got %u)\n", i, (unsigned)res[i]);
             return 1;
+        }
     }
-
+    printf("[PASS] check_zero_poly_schoolbook\n");
     return 0;
 }
 
-static int check_identity_poly_schoolbook() {
+static int check_identity_poly_schoolbook(void) {
     Poly_Zq ones = {1};
     Poly_Zq poly;
     random_poly_zq(poly);
@@ -42,16 +42,19 @@ static int check_identity_poly_schoolbook() {
     poly_mul_negacyclic_zq(ones, poly, res);
 
     for (int i = 0; i < SABER_N; ++i) {
-        if (res[i] != poly[i])
+        if (res[i] != poly[i]) {
+            printf("[FAIL] check_identity_poly_schoolbook: coefficient %d mismatch"
+                   " (got %u, expected %u)\n",
+                   i, (unsigned)res[i], (unsigned)poly[i]);
             return 1;
+        }
     }
-
+    printf("[PASS] check_identity_poly_schoolbook\n");
     return 0;
 }
 
-// This is testing multiplying x^{255} * x, which is x^{256}. This should reduce to -1, which is
-// q - 1 in SABER's ring.
-static int check_negacyclic_wrap_schoolbook() {
+// Tests x^255 * x = x^256 ≡ -1 (mod x^256+1), so result[0] = q-1 and all other coefficients zero.
+static int check_negacyclic_wrap_schoolbook(void) {
     Poly_Zq a = {0};
     a[255] = 1;
 
@@ -62,25 +65,32 @@ static int check_negacyclic_wrap_schoolbook() {
     poly_mul_negacyclic_zq(a, b, res);
 
     for (int i = 0; i < SABER_N; ++i) {
-        Zq expected = (i == 0) ? 8191 : 0;
-        if (res[i] != expected)
+        Zq expected = (i == 0) ? (Zq)8191 : (Zq)0;
+        if (res[i] != expected) {
+            printf("[FAIL] check_negacyclic_wrap_schoolbook: coefficient %d"
+                   " (got %u, expected %u)\n",
+                   i, (unsigned)res[i], (unsigned)expected);
             return 1;
+        }
     }
-
+    printf("[PASS] check_negacyclic_wrap_schoolbook\n");
     return 0;
 }
 
 int main(void) {
-    int res = 0;
-    if ((res |= check_zero_poly_schoolbook()))
-        printf("check_zero_poly_schoolbook        FAILED\n");
-    if ((res |= check_identity_poly_schoolbook()))
-        printf("check_identity_poly_schoolbook    FAILED\n");
-    if ((res |= check_negacyclic_wrap_schoolbook()))
-        printf("check_negacyclic_wrap_schoolbook  FAILED\n");
+    srand((unsigned)time(NULL));
+    int passed = 0, total = 0;
 
-    if (res == 0)
-        printf("ALL CHECKS PASSED\n");
+    total++;
+    if (check_zero_poly_schoolbook() == 0)
+        passed++;
+    total++;
+    if (check_identity_poly_schoolbook() == 0)
+        passed++;
+    total++;
+    if (check_negacyclic_wrap_schoolbook() == 0)
+        passed++;
 
-    return (res | 0);
+    printf("poly_test: %d/%d passed\n", passed, total);
+    return (passed == total) ? 0 : 1;
 }

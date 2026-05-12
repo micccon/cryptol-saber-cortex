@@ -1,97 +1,91 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "poly.h"
 
-static int check_zq_case(void) {
-    static const Poly_Zq a = {
-        [0] = 1,
-        [2] = 2,
-        [SABER_N - 1] = 3
-    };
-    static const Poly_Zq b = {
-        [0] = 4,
-        [1] = 5,
-        [SABER_N - 1] = 6
-    };
-    static const Poly_Zq expected = {
-        [0] = 8181,
-        [1] = 8185,
-        [2] = 8,
-        [3] = 10,
-        [SABER_N - 2] = 8174,
-        [SABER_N - 1] = 18
-    };
-    Poly_Zq actual = {0};
-    size_t i;
+static void random_poly_zq(Poly_Zq poly) {
+    for (int i = 0; i < SABER_N; ++i)
+        poly[i] = rand() & MASK_Zq;
+}
 
-    poly_mul_negacyclic_zq(a, b, actual);
+static int check_zero_poly_schoolbook(void) {
+    Poly_Zq zeroes = {0};
+    Poly_Zq poly;
+    random_poly_zq(poly);
 
-    if (memcmp(actual, expected, sizeof(expected)) != 0) {
-        for (i = 0; i < SABER_N; ++i) {
-            if (actual[i] != expected[i]) {
-                printf("zq test failed at coefficient %zu: got %u, expected %u\n",
-                       i,
-                       (unsigned)actual[i],
-                       (unsigned)expected[i]);
-                break;
-            }
+    Poly_Zq res;
+    poly_mul_negacyclic_zq(zeroes, poly, res);
+
+    for (int i = 0; i < SABER_N; ++i) {
+        if (res[i] != 0) {
+            printf("[FAIL] check_zero_poly_schoolbook: coefficient %d nonzero (got %u)\n", i, (unsigned)res[i]);
+            return 1;
         }
-        return 1;
     }
-
+    printf("[PASS] check_zero_poly_schoolbook\n");
     return 0;
 }
 
-static int check_zp_case(void) {
-    static const Poly_Zp a = {
-        [0] = 1,
-        [2] = 2,
-        [SABER_N - 1] = 3
-    };
-    static const Poly_Zp b = {
-        [0] = 4,
-        [1] = 5,
-        [SABER_N - 1] = 6
-    };
-    static const Poly_Zp expected = {
-        [0] = 1013,
-        [1] = 1017,
-        [2] = 8,
-        [3] = 10,
-        [SABER_N - 2] = 1006,
-        [SABER_N - 1] = 18
-    };
-    Poly_Zp actual = {0};
-    size_t i;
+static int check_identity_poly_schoolbook(void) {
+    Poly_Zq ones = {1};
+    Poly_Zq poly;
+    random_poly_zq(poly);
 
-    poly_mul_negacyclic_zp(a, b, actual);
+    Poly_Zq res;
+    poly_mul_negacyclic_zq(ones, poly, res);
 
-    if (memcmp(actual, expected, sizeof(expected)) != 0) {
-        for (i = 0; i < SABER_N; ++i) {
-            if (actual[i] != expected[i]) {
-                printf("zp test failed at coefficient %zu: got %u, expected %u\n",
-                       i,
-                       (unsigned)actual[i],
-                       (unsigned)expected[i]);
-                break;
-            }
+    for (int i = 0; i < SABER_N; ++i) {
+        if (res[i] != poly[i]) {
+            printf("[FAIL] check_identity_poly_schoolbook: coefficient %d mismatch"
+                   " (got %u, expected %u)\n",
+                   i, (unsigned)res[i], (unsigned)poly[i]);
+            return 1;
         }
-        return 1;
     }
+    printf("[PASS] check_identity_poly_schoolbook\n");
+    return 0;
+}
 
+// Tests x^255 * x = x^256 ≡ -1 (mod x^256+1), so result[0] = q-1 and all other coefficients zero.
+static int check_negacyclic_wrap_schoolbook(void) {
+    Poly_Zq a = {0};
+    a[255] = 1;
+
+    Poly_Zq b = {0};
+    b[1] = 1;
+
+    Poly_Zq res;
+    poly_mul_negacyclic_zq(a, b, res);
+
+    for (int i = 0; i < SABER_N; ++i) {
+        Zq expected = (i == 0) ? (Zq)8191 : (Zq)0;
+        if (res[i] != expected) {
+            printf("[FAIL] check_negacyclic_wrap_schoolbook: coefficient %d"
+                   " (got %u, expected %u)\n",
+                   i, (unsigned)res[i], (unsigned)expected);
+            return 1;
+        }
+    }
+    printf("[PASS] check_negacyclic_wrap_schoolbook\n");
     return 0;
 }
 
 int main(void) {
-    if (check_zq_case() != 0) {
-        return 1;
-    }
+    srand((unsigned)time(NULL));
+    int passed = 0, total = 0;
 
-    if (check_zp_case() != 0) {
-        return 1;
-    }
+    total++;
+    if (check_zero_poly_schoolbook() == 0)
+        passed++;
+    total++;
+    if (check_identity_poly_schoolbook() == 0)
+        passed++;
+    total++;
+    if (check_negacyclic_wrap_schoolbook() == 0)
+        passed++;
 
-    puts("poly negacyclic multiplication tests passed");
-    return 0;
+    printf("poly_test: %d/%d passed\n", passed, total);
+    return (passed == total) ? 0 : 1;
 }

@@ -25,10 +25,14 @@ void shift_left_u16(uint16_t *output, const uint16_t *input, size_t count, uint8
     }
 }
 
-void transpose_matrix(PolyMatrix_Zq input, PolyMatrix_Zq result) {
+void transpose_matrix(PolyMatrix_Zq A) {
+    // Swap upper triangle with lower triangle; diagonal polys are unchanged.
     for (size_t i = 0; i < SABER_L; ++i) {
-        for (size_t j = 0; j < SABER_L; ++j) {
-            memcpy(result[i][j], input[j][i], sizeof(Poly_Zq));
+        for (size_t j = i + 1; j < SABER_L; ++j) {
+            Poly_Zq tmp;
+            memcpy(tmp, A[i][j], sizeof(Poly_Zq));
+            memcpy(A[i][j], A[j][i], sizeof(Poly_Zq));
+            memcpy(A[j][i], tmp, sizeof(Poly_Zq));
         }
     }
 }

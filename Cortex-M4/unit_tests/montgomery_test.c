@@ -1,16 +1,9 @@
 /*
- * This is a test script for ensuring the correctness of the Montgomery multiplication, reduction,
- * and conversion functions. Three main things are checked:
+ * Correctness tests for the Montgomery arithmetic helpers.
  *
- *    1) That converting an integer a ∈ [0, q') into Montgomery space, and then recovering a from its
- *       Montgomery space representative â ∈ [0, q'), correctly works (i.e., roundtrip correctness of
- *       going to, and then coming back from, Montgomery space).
- *    2) That performing naive modular multiplication a * b (mod q') where a, b ∈ [0, q') yields the same
- *       result as the Montgomery multiplication â * b̂ * R^{-1} (mod q').
- *    3) That performing multiple chained multiplications a * b * c * d (mod q') naively where a, b, c, d ∈ [0, q')
- *       yields the same result as the chained Montgomery multiplications:
- *       (from_montgomery(montgomery_multiply(montgomery_multiply(montgomery_multiply(â, b̂), ĉ), d̂))
- *     ≡ a * b * c * d * (mod q')
+ *  1. check_montgomery_roundtrip  — to_montgomery / from_montgomery are inverses.
+ *  2. check_two_way_product       — montgomery_multiply agrees with naive a*b mod q'.
+ *  3. check_four_way_product      — four chained montgomery_multiplys agree with naive.
  */
 
 #include <stdint.h>
@@ -22,61 +15,80 @@
 
 #define NUM_ITERS 10000
 
-int main(void) {
-    srand(time(NULL));
-
-    uint32_t a, b, c, d;
-    uint32_t montA, montB, montC, montD;
-    uint32_t aTimesB, fourWayProduct;
-
+static int check_montgomery_roundtrip(void) {
     for (int i = 0; i < NUM_ITERS; ++i) {
-        a = rand() % NTT_Q;
-        b = rand() % NTT_Q;
-        c = rand() % NTT_Q;
-        d = rand() % NTT_Q;
-        montA = to_montgomery(a);
-        montB = to_montgomery(b);
-        montC = to_montgomery(c);
-        montD = to_montgomery(d);
-        aTimesB = ((uint64_t)a * (uint64_t)b) % NTT_Q;
-        fourWayProduct = ((uint64_t)a * (uint64_t)b) % NTT_Q;
-        fourWayProduct = ((uint64_t)fourWayProduct * (uint64_t)c) % NTT_Q;
-        fourWayProduct = ((uint64_t)fourWayProduct * (uint64_t)d) % NTT_Q;
+        uint32_t a = (uint32_t)rand() % NTT_Q;
+        uint32_t mont = to_montgomery(a);
 
-        // Check Montgomery roundtrip correctness on 1/4 of all random numbers
-        if (a != (from_montgomery(montA))) {
-            printf("Roundtrip check failed on iteration %d\n"
-                   "a = %d\n"
-                   "to_montgomery(a) = %d\n"
-                   "from_montgomery(to_montgomery(a)) = %d\n",
-                   i, a, montA, from_montgomery(montA));
-            return 1;
-        }
-
-        // Check that a * b (mod q') == â * b̂ * R^{-1} (mod q')
-        if (aTimesB != from_montgomery(montgomery_multiply(montA, montB))) {
-            printf("Two-way product check failed on iteration %d\n"
-                   "a * b = %d\n"
-                   "from_montgomery(montgomery_multiply(montA, montB)) = %d\n",
-                   i, aTimesB, from_montgomery(montgomery_multiply(montA, montB)));
-            return 1;
-        }
-
-        // Check that a * b * c * d (mod q') == ((((â * b̂) * R^{-1}) * ĉ) * R^{-1} * d̂) * R^{-1}
-        int32_t montFourWayProduct =
-            montgomery_multiply(montgomery_multiply(montgomery_multiply(montA, montB), montC), montD);
-
-        if (fourWayProduct != from_montgomery(montFourWayProduct)) {
-            printf("Four-way product check failed on iteration %d\n"
-                   "a = %d, b = %d, c = %d, d = %d\n"
-                   "Expected (naive):         a * b * c * d (mod q') = %d\n"
-                   "Got (Montgomery): from_montgomery(â * b̂ * ĉ * d̂) = %d\n",
-                   i, a, b, c, d, fourWayProduct, from_montgomery(montFourWayProduct));
+        if (from_montgomery(mont) != a) {
+            printf("[FAIL] check_montgomery_roundtrip: iteration %d:"
+                   " a=%u, to_mont=%u, from_mont(to_mont)=%u\n",
+                   i, a, mont, from_montgomery(mont));
             return 1;
         }
     }
-
-    printf("All checks PASSED\n");
-
+    printf("[PASS] check_montgomery_roundtrip\n");
     return 0;
+}
+
+static int check_two_way_product(void) {
+    for (int i = 0; i < NUM_ITERS; ++i) {
+        uint32_t a = (uint32_t)rand() % NTT_Q;
+        uint32_t b = (uint32_t)rand() % NTT_Q;
+        uint32_t expected = (uint32_t)(((uint64_t)a * b) % NTT_Q);
+        uint32_t got = from_montgomery(montgomery_multiply(to_montgomery(a), to_montgomery(b)));
+
+        if (got != expected) {
+            printf("[FAIL] check_two_way_product: iteration %d:"
+                   " a*b=%u, from_mont(mont_mul)=%u\n",
+                   i, expected, got);
+            return 1;
+        }
+    }
+    printf("[PASS] check_two_way_product\n");
+    return 0;
+}
+
+static int check_four_way_product(void) {
+    for (int i = 0; i < NUM_ITERS; ++i) {
+        uint32_t a = (uint32_t)rand() % NTT_Q;
+        uint32_t b = (uint32_t)rand() % NTT_Q;
+        uint32_t c = (uint32_t)rand() % NTT_Q;
+        uint32_t d = (uint32_t)rand() % NTT_Q;
+
+        uint32_t expected = (uint32_t)(((uint64_t)a * b) % NTT_Q);
+        expected = (uint32_t)(((uint64_t)expected * c) % NTT_Q);
+        expected = (uint32_t)(((uint64_t)expected * d) % NTT_Q);
+
+        uint32_t got = from_montgomery(montgomery_multiply(
+            montgomery_multiply(montgomery_multiply(to_montgomery(a), to_montgomery(b)), to_montgomery(c)),
+            to_montgomery(d)));
+
+        if (got != expected) {
+            printf("[FAIL] check_four_way_product: iteration %d:"
+                   " a=%u b=%u c=%u d=%u, expected=%u, got=%u\n",
+                   i, a, b, c, d, expected, got);
+            return 1;
+        }
+    }
+    printf("[PASS] check_four_way_product\n");
+    return 0;
+}
+
+int main(void) {
+    srand((unsigned)time(NULL));
+    int passed = 0, total = 0;
+
+    total++;
+    if (check_montgomery_roundtrip() == 0)
+        passed++;
+    total++;
+    if (check_two_way_product() == 0)
+        passed++;
+    total++;
+    if (check_four_way_product() == 0)
+        passed++;
+
+    printf("montgomery_test: %d/%d passed\n", passed, total);
+    return (passed == total) ? 0 : 1;
 }
