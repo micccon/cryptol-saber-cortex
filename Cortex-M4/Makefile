@@ -1,5 +1,7 @@
 CC ?= cc
-CFLAGS ?= -Wall -Wextra -Wpedantic -Wno-newline-eof -O3 -std=gnu2x
+CFLAGS ?= -Wall -Wextra -Wpedantic -Wno-newline-eof -O3 -std=gnu2x \
+           -flto -ffunction-sections -fdata-sections
+LDFLAGS ?= -Wl,--gc-sections
 INCLUDES = -Iinclude
 
 BUILD_DIR = build
@@ -14,7 +16,7 @@ BENCH_CYCLES_RUN    =
 endif
 
 # Unit test names — each maps to unit_tests/<name>.c
-TEST_NAMES = randombytes_test poly_test pack_unpack_test arithmetic_test pke_test kem_test
+TEST_NAMES = randombytes_test poly_test pack_unpack_test arithmetic_test pke_test kem_test montgomery_test
 
 # Sources linked into every test binary.
 COMMON_TEST_SRCS = \
@@ -26,6 +28,7 @@ FULL_KEM_SRCS = \
 	src/indcpa.c \
 	src/arithmetic.c \
 	src/poly.c \
+	src/ntt_helpers.c \
 	src/pack_unpack.c \
 	src/randombytes.c \
 	third_party/fips202.c \
@@ -41,11 +44,13 @@ pack_unpack_test_SRCS = \
 	src/pack_unpack.c
 
 poly_test_SRCS = \
-	src/poly.c
+	src/poly.c \
+	src/ntt_helpers.c
 
 arithmetic_test_SRCS = \
 	src/arithmetic.c \
 	src/poly.c \
+	src/ntt_helpers.c \
 	src/pack_unpack.c \
 	third_party/fips202.c
 
@@ -53,10 +58,14 @@ pke_test_SRCS = \
 	src/indcpa.c \
 	src/arithmetic.c \
 	src/poly.c \
+	src/ntt_helpers.c \
 	src/pack_unpack.c \
 	src/randombytes.c \
 	third_party/fips202.c \
 	third_party/AES/WjCryptLib_Aes.c
+
+montgomery_test_SRCS = \
+	src/ntt_helpers.c
 
 kem_test_SRCS = $(FULL_KEM_SRCS)
 
@@ -77,7 +86,7 @@ $(BUILD_DIR):
 #   run-<testname>     - build and run only that test
 define make_test_rules
 $(BUILD_DIR)/$(1): unit_tests/$(1).c $(COMMON_TEST_SRCS) $$($(1)_SRCS) | $(BUILD_DIR)
-	$$(CC) $$(CFLAGS) $$(INCLUDES) unit_tests/$(1).c $$(COMMON_TEST_SRCS) $$($(1)_SRCS) -o $(BUILD_DIR)/$(1)
+	$$(CC) $$(CFLAGS) $$(INCLUDES) unit_tests/$(1).c $$(COMMON_TEST_SRCS) $$($(1)_SRCS) $$(LDFLAGS) -o $(BUILD_DIR)/$(1)
 
 test-$(1): $(BUILD_DIR)/$(1)
 
@@ -88,7 +97,7 @@ endef
 $(foreach test,$(TEST_NAMES),$(eval $(call make_test_rules,$(test))))
 
 $(BUILD_DIR)/kats_test: KATs/kats.c KATs/kats.h $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) KATs/kats.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) -o $(BUILD_DIR)/kats_test
+	$(CC) $(CFLAGS) $(INCLUDES) KATs/kats.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) $(LDFLAGS) -o $(BUILD_DIR)/kats_test
 
 test-kats: $(BUILD_DIR)/kats_test
 
@@ -96,10 +105,10 @@ run-kats: $(BUILD_DIR)/kats_test
 	./$(BUILD_DIR)/kats_test
 
 $(BUILD_DIR)/bench_portable: bench/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) bench/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) -o $(BUILD_DIR)/bench_portable
+	$(CC) $(CFLAGS) $(INCLUDES) bench/bench_portable.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) $(LDFLAGS) -o $(BUILD_DIR)/bench_portable
 
 $(BUILD_DIR)/bench_cycles: bench/bench_cycles.c bench/cpucycles.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) bench/bench_cycles.c bench/cpucycles.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) -o $(BUILD_DIR)/bench_cycles
+	$(CC) $(CFLAGS) $(INCLUDES) bench/bench_cycles.c bench/cpucycles.c $(COMMON_TEST_SRCS) $(FULL_KEM_SRCS) $(LDFLAGS) -o $(BUILD_DIR)/bench_cycles
 
 bench: $(BUILD_DIR)/bench_portable $(BENCH_CYCLES_TARGET)
 	./$(BUILD_DIR)/bench_portable
