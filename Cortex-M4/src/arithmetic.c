@@ -6,7 +6,7 @@
 
 void gen_matrix(const uint8_t seed[SABER_SEEDBYTES], PolyMatrix_Zq result) {
     // Generate buffer
-    uint8_t buf[SABER_L * SABER_L * SABER_N * SABER_EQ / 8];
+    static uint8_t buf[SABER_L * SABER_L * SABER_N * SABER_EQ / 8];
     shake128(buf, sizeof(buf), seed, SABER_SEEDBYTES);
 
     // Reinterpret buf as a 2D array [L*L][poly_bytes] to index each polynomial directly,
@@ -21,6 +21,9 @@ void gen_matrix(const uint8_t seed[SABER_SEEDBYTES], PolyMatrix_Zq result) {
     }
 }
 
+// Popcount for all 4-bit values [0, 15]. Replaces hamming_weight() in the gen_secret hot path.
+static const uint8_t hw4[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
+
 void gen_secret(const uint8_t seed[SABER_NOISE_SEEDBYTES], PolyVec_Zq result) {
     uint8_t buf[SABER_L * SABER_N * SABER_MU / 8];
     shake128(buf, sizeof(buf), seed, SABER_NOISE_SEEDBYTES);
@@ -34,14 +37,12 @@ void gen_secret(const uint8_t seed[SABER_NOISE_SEEDBYTES], PolyVec_Zq result) {
     int k = 0;
     for (int i = 0; i < SABER_L; i++) {
         for (int j = 0; j < SABER_N; j++) {
-            uint8_t low = buf[k] & 0x0F;
-            uint8_t high = (buf[k] >> 4) & 0x0F;
-            // Calculate the hamming weight of the low and high halves, subtract, and store in result
-            result[i][j] = (Zq)((hamming_weight(&low, SABER_MU / 2) - hamming_weight(&high, SABER_MU / 2)) & MASK_Zq);
+            uint8_t low  = buf[k] & 0x0F;
+            uint8_t high = buf[k] >> 4;
+            result[i][j] = (Zq)((hw4[low] - hw4[high]) & MASK_Zq);
             ++k;
         }
     }
-    return;
 }
 
 void inner_prod(PolyVec_Zp a, PolyVec_Zp b, Poly_Zp result) {

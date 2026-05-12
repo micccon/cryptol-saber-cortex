@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+static PolyMatrix_Zq scratch_A;
+
 // Rounds each coefficient of v in-place from Zq to Zp using the Saber H1 shift.
 static void polyvec_round_zq_to_zp(PolyVec_Zq v) {
     for (size_t i = 0; i < SABER_L; ++i)
@@ -15,9 +17,8 @@ void PKE_KeyGen_Deterministic(pk_t *pk, pke_sk_t *sk, uint8_t seed_a[SABER_SEEDB
     memcpy(pk->seed_a, seed_a, SABER_SEEDBYTES);
 
     // Generate matrix A from seed_a.
-    PolyMatrix_Zq A;
-    memset(A, 0, sizeof(A));
-    gen_matrix(pk->seed_a, A);
+    memset(scratch_A, 0, sizeof(scratch_A));
+    gen_matrix(pk->seed_a, scratch_A);
 
     // Generate secret vector s from seed_s.
     PolyVec_Zq s;
@@ -25,12 +26,12 @@ void PKE_KeyGen_Deterministic(pk_t *pk, pke_sk_t *sk, uint8_t seed_a[SABER_SEEDB
     gen_secret(seed_s, s);
 
     // Transpose A in-place to obtain A^T; eliminates the need for a second matrix buffer.
-    transpose_matrix(A);
+    transpose_matrix(scratch_A);
 
     // Compute b = A^T * s in R_q.
     PolyVec_Zq b;
     memset(b, 0, sizeof(b));
-    matrix_vector_mul(A, s, b);
+    matrix_vector_mul(scratch_A, s, b);
 
     // Round b in-place from Zq to Zp.
     polyvec_round_zq_to_zp(b);
@@ -57,9 +58,8 @@ void PKE_KeyGen(pk_t *pk, pke_sk_t *sk) {
 
 void PKE_Enc(uint8_t m[SABER_KEYBYTES], uint8_t seed_s[SABER_SEEDBYTES], pk_t *pk, ct_t *ct) {
     // Generate matrix A from seed_a in the public key.
-    PolyMatrix_Zq A;
-    memset(A, 0, sizeof(A));
-    gen_matrix(pk->seed_a, A);
+    memset(scratch_A, 0, sizeof(scratch_A));
+    gen_matrix(pk->seed_a, scratch_A);
 
     // Generate the ephemeral secret vector s' from the encryption seed.
     PolyVec_Zq s;
@@ -69,7 +69,7 @@ void PKE_Enc(uint8_t m[SABER_KEYBYTES], uint8_t seed_s[SABER_SEEDBYTES], pk_t *p
     // Compute b = A * s' in R_q, then round in-place to Zp (reused for the first ciphertext component).
     PolyVec_Zq b;
     memset(b, 0, sizeof(b));
-    matrix_vector_mul(A, s, b);
+    matrix_vector_mul(scratch_A, s, b);
     polyvec_round_zq_to_zp(b);
 
     // Recover the public-key vector b0 from its packed Zp encoding.

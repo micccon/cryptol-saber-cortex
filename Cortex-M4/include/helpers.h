@@ -4,7 +4,6 @@
  * Declares the following helpers:
  *   - load32_le / store32_le:  little-endian 32-bit word packing and unpacking
  *   - transpose_matrix:        in-place transpose of a PolyMatrix_Zq
- *   - hamming_weight:          population count over a byte array
  *   - unpack_bit_string:       unpack a packed bit string into an element array
  *   - verify:                  constant-time byte-string comparison
  *   - cmov:                    constant-time conditional move
@@ -45,14 +44,6 @@ void store32_le(uint8_t bytes[4], uint32_t word);
  * @param A Matrix to transpose in-place
  */
 void transpose_matrix(PolyMatrix_Zq A);
-
-/**
- * Calculates the hamming weight of a bit string represented as a byte array.
- *
- * @param bytes Input array for calculating the hamming weight
- * @param num_bits number of bits to calculate the weight of
- */
-int hamming_weight(uint8_t *bytes, uint32_t num_bits);
 
 /**
  * Unpacks a bit string represented as a contiguous byte string with up to 8 bits per unpacked element.

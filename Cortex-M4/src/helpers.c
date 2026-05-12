@@ -37,22 +37,6 @@ void transpose_matrix(PolyMatrix_Zq A) {
     }
 }
 
-int hamming_weight(uint8_t *bytes, uint32_t num_bits) {
-    int count = 0;
-    int byte_index = 0;
-    while (num_bits > 0) {
-        uint8_t byte = bytes[byte_index];
-        int bits_to_process = (num_bits >= 8) ? 8 : num_bits;
-        for (int j = 0; j < bits_to_process; j++) {
-            count += byte & 1;
-            byte >>= 1;
-        }
-        num_bits -= bits_to_process;
-        byte_index++;
-    }
-    return count;
-}
-
 void unpack_bit_string(const uint8_t *input_bytes, uint8_t *output_elements, uint16_t num_elements,
                        uint8_t bits_per_element) {
     uint16_t global_bit_index = 0;
