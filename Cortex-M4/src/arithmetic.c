@@ -53,7 +53,7 @@ void inner_prod(PolyVec_Zp a, PolyVec_Zp b, Poly_Zp result) {
     }
 
     for (size_t i = 0; i < SABER_L; ++i) {
-        poly_mul_negacyclic_zp(a[i], b[i], product);
+        poly_mul_ntt_zp(a[i], b[i], product);
 
         for (size_t k = 0; k < SABER_N; ++k) {
             result[k] = (Zp)((result[k] + product[k]) & MASK_Zp);
@@ -69,7 +69,7 @@ void matrix_vector_mul(PolyMatrix_Zq M, PolyVec_Zq v, PolyVec_Zq result) {
 
         // For each poly in M and v
         for (int j = 0; j < SABER_L; j++) {
-            poly_mul_negacyclic_zq(M[i][j], v[j], product);
+            poly_mul_ntt_zq(M[i][j], v[j], product);
 
             for (int k = 0; k < SABER_N; k++)
                 result[i][k] = (Zq)((result[i][k] + product[k]) & MASK_Zq);
