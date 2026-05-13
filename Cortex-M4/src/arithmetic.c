@@ -6,7 +6,7 @@
 
 void gen_matrix(const uint8_t seed[SABER_SEEDBYTES], PolyMatrix_Zq result) {
     // Generate buffer
-    static uint8_t buf[SABER_L * SABER_L * SABER_N * SABER_EQ / 8];
+    uint8_t buf[SABER_L * SABER_L * SABER_N * SABER_EQ / 8];
     shake128(buf, sizeof(buf), seed, SABER_SEEDBYTES);
 
     // Reinterpret buf as a 2D array [L*L][poly_bytes] to index each polynomial directly,
